@@ -53,11 +53,22 @@ async function addPerson() {
     const photo = capturedPhoto || document.getElementById('photo').files[0];
 
     // basic validation
+    const nameRegex = /^[a-zA-ZÀ-ÿ]{1,}$/;
+
+    // check if all fields are filled and if the photo is valid
     if (!firstName || !lastName || !photo) {
         alert("Please fill in all fields and provide a photo.");
         return;
     }
-
+    if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
+        alert("Names can only contain letters.");
+        return;
+    }
+    if (!photo.type.startsWith('image/')) {
+        alert("Please upload a valid image file.");
+        return;
+    }
+    
     // FormData lets us send text + file together in one request
     const formData = new FormData();
     formData.append('firstName', firstName);

@@ -1,10 +1,14 @@
+import sys
+sys.path.append('../')  # add parent directory to path to import detecVisage
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from detecVisage import FacesDetects_from_bytes, FacesDraw
+
 
 # create the FastAPI application
 app = FastAPI()
 
-from fastapi.staticfiles import StaticFiles
 
 # CORS — allows the browser to send requests to FastAPI
 # without this, the browser blocks requests for security reasons
@@ -24,6 +28,10 @@ async def add_person(
     lastName:  str = Form(...),
     photo:     UploadFile = File(...)
 ):
+    contents = await photo.read()
+    result, image = FacesDetects_from_bytes(contents)
+    image_boxed = FacesDraw(image, result)
+
     # for now, just print what we received
     print(f"Received: {firstName} {lastName}, file: {photo.filename}")
 

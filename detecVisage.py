@@ -52,14 +52,14 @@ def FacesDraw(image, list_faces):
         cv2.rectangle(img_copy, (x, y), (x + w, y + h), (0, 255, 0), 2)
     return img_copy
 
+if __name__ == "__main__":
+    url = "images/foule.jpg" 
+    x  = time.time()
+    result , image =FacesDetects(url)
+    image_cadree =  FacesDraw(image , result)
 
-url = "images/foule.jpg" 
-x  = time.time()
-result , image =FacesDetects(url)
-image_cadree =  FacesDraw(image , result)
+    image_bgr = cv2.cvtColor(image_cadree, cv2.COLOR_RGB2BGR)
 
-image_bgr = cv2.cvtColor(image_cadree, cv2.COLOR_RGB2BGR)
-
-chemin_enregistrement = "images/resultats/resultat_detection.jpg"
-succes = cv2.imwrite(chemin_enregistrement, image_bgr)
-print(time.time()-x)
+    chemin_enregistrement = "images/resultats/resultat_detection.jpg"
+    succes = cv2.imwrite(chemin_enregistrement, image_bgr)
+    print(time.time()-x)
