@@ -36,7 +36,8 @@ async def add_person(
     image_boxed = FacesDraw(image, result)
 
     # convert the boxed image to bytes
-    _, buffer = cv2.imencode('.jpg', image_boxed)
+    image_boxes_bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
+    _, buffer = cv2.imencode('.jpg', image_boxes_bgr)
     image_bytes = buffer.tobytes()
 
     print(f"Received: {firstName} {lastName}, file: {photo.filename}")

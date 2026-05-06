@@ -46,6 +46,11 @@ function takePicture() {
 // ── ADD PERSON ──
 // collects form data and sends it to FastAPI
 async function addPerson() {
+    if (!document.getElementById('consent').checked) {
+        alert("You must accept the privacy policy.");
+        return;
+    }
+
     const firstName = document.getElementById('firstName').value;
     const lastName  = document.getElementById('lastName').value;
 
@@ -88,6 +93,8 @@ async function addPerson() {
         const img = document.getElementById('result');
         img.src = imageUrl;
         img.style.display = 'block';
+
+        document.getElementById('message').textContent = "Person added successfully!";  
     } catch (error) {
         document.getElementById('message').textContent = "Error: server not available";
     }
