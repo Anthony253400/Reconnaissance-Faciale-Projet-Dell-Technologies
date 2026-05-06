@@ -2,6 +2,7 @@ import cv2
 from mtcnn import MTCNN
 from  mtcnn.utils.images  import  load_image
 import time
+import numpy as np
 
 
 def FacesDetects(url_img : str ):
@@ -21,6 +22,16 @@ def FacesDetects(url_img : str ):
     image  =  load_image ( url_img )
     result  =  detector.detect_faces ( image )
     return result , image
+
+def FacesDetects_from_bytes(image_bytes):
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    detector = MTCNN()
+    result = detector.detect_faces(image_rgb)
+    
+    return result, image_rgb
 
 def FacesDraw(image, list_faces):
     """
