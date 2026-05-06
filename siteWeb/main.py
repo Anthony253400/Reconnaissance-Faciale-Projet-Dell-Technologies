@@ -1,8 +1,11 @@
 import sys
+import io
+import cv2
 sys.path.append('../')  # add parent directory to path to import detecVisage
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from detecVisage import FacesDetects_from_bytes, FacesDraw
 
 
@@ -32,10 +35,13 @@ async def add_person(
     result, image = FacesDetects_from_bytes(contents)
     image_boxed = FacesDraw(image, result)
 
-    # for now, just print what we received
+    # convert the boxed image to bytes
+    _, buffer = cv2.imencode('.jpg', image_boxed)
+    image_bytes = buffer.tobytes()
+
     print(f"Received: {firstName} {lastName}, file: {photo.filename}")
 
-    # respond to the website
-    return {"message": f"{firstName} {lastName} added successfully"}
+    # sends image to browser
+    return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
 
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

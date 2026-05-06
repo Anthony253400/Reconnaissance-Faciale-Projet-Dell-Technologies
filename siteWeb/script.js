@@ -82,9 +82,12 @@ async function addPerson() {
             body: formData
         });
 
-        const data = await response.json();
-        document.getElementById('message').textContent =  data.message;
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
 
+        const img = document.getElementById('result');
+        img.src = imageUrl;
+        img.style.display = 'block';
     } catch (error) {
         document.getElementById('message').textContent = "Error: server not available";
     }
