@@ -1,1 +1,9 @@
-test
+
+import mediapipe as mp
+from mediapipe.python.solutions import face_detection as mp_face_detection
+from mediapipe.python.solutions import drawing_utils as mp_drawing 
+try:
+    test = mp.solutions.face_detection
+    print("✅ Succès ! MediaPipe est opérationnel.")
+except AttributeError as e:
+    print(f"❌ Toujours l'erreur : {e}")

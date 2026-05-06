@@ -1,9 +1,11 @@
+mediapipe==0.10.11
+
 tensorflow            
 torch
 torchvision
 
 opencv-python
-mediapipe
+mediapipe==0.10.11
 insightface
 onnxruntime-gpu
 

@@ -53,13 +53,13 @@ def FacesDraw(image, list_faces):
     return img_copy
 
 
-url = "images/foule.jpg" 
+url = "images/anthony.jpg" 
 x  = time.time()
 result , image =FacesDetects(url)
 image_cadree =  FacesDraw(image , result)
 
 image_bgr = cv2.cvtColor(image_cadree, cv2.COLOR_RGB2BGR)
 
-chemin_enregistrement = "images/resultats/resultat_detection.jpg"
+chemin_enregistrement = "images/resultats/anthony.jpg"
 succes = cv2.imwrite(chemin_enregistrement, image_bgr)
 print(time.time()-x)
