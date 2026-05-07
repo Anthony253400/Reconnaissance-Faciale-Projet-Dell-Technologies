@@ -40,8 +40,8 @@ async def add_person(
     photo:     UploadFile = File(...)
 ):
     contents = await photo.read()
-    result, image = FacesDetects_from_bytes(contents)
-    image_boxed = FacesDraw(image, result)
+    box, result, image = FacesDetects_from_bytes(contents,"mediapipe",detector)
+    image_boxed = FacesDraw(image, box)
 
     # convert the boxed image to bytes
     image_boxes_bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)

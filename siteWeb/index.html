@@ -1,62 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Face Recognition</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Face Recognition</h1>
+<div class="container">
+ 
+    <!-- HEADER -->
+    <header class="page-header">
+        <h1>Face Recognition</h1>
+        <p class="subtitle">Register and manage faces in the database</p>
+    </header>
+ 
+    <!--MAIN GRID  (webcam left and form right) -->
+    <div class="main-grid">
+ 
+        <!-- webcam -->
+        <div class="section-card">
+            <h2>Webcam</h2>
+ 
+            <div class="webcam-wrapper">
+                <video id="webcam" autoplay playsinline></video>
+            </div>
+ 
+            <canvas id="canvas" style="display:none;"></canvas>
+ 
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="takePicture()">Take a picture!</button>
+            </div>
+ 
+            <img id="preview" style="display:none;" />
+        </div>
+ 
+        <!-- personal  info -->
+        <div class="section-card">
+            <h2>Person details</h2>
+ 
+            <div class="form-group">
+                <label for="firstName">First name</label>
+                <input type="text" id="firstName" placeholder="John" />
+            </div>
+ 
+            <div class="form-group">
+                <label for="lastName">Last name</label>
+                <input type="text" id="lastName" placeholder="Doe" />
+            </div>
+ 
+            <div class="consent-row">
+                <input type="checkbox" id="consent" />
+                <label for="consent">I agree to the <a href="privacy.html" target="_blank">privacy policy</a>.</label>
+            </div>
+        </div>
+ 
+    </div>
+ 
+    <!-- upload + submit -->
+    <div class="section-card section-bottom">
+        <h2> or upload a photo from your computer</h2>
+ 
+        <div class="form-group">
+            <label for="photo">Select an image file</label>
+            <input type="file" id="photo" accept="image/*" />
+        </div>
+ 
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="addPerson()">Add to database</button>
+        </div>
 
-    <!-- ── WEBCAM SECTION ── -->
-    <h2>Add picture from the Webcam</h2>
-
-    <!-- video tag displays the webcam stream -->
-    <video id="webcam" autoplay playsinline width="640" height="480"></video>
-
-    <!-- hidden canvas — used to capture a frame from the video -->
-    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-
-    <br/>
-    <button onclick="takePicture()">Take picture</button>
-
-    <!-- shows the captured photo -->
-    <img id="preview" width="200" style="display:none; margin-top:8px;" />
-
-
-    <!-- ── ADD PERSON SECTION ── -->
-    <h2>Add a person from existing picture</h2>
-
-    <label>First name: </label>
-    <input type="text" id="firstName" placeholder="John" />
-
-    <br/><br/>
-
-    <label>Last name: </label>
-    <input type="text" id="lastName" placeholder="Doe" />
-
-    <br/><br/>
-
-    <!-- file input — alternative to taking a picture -->
-    <label>Or upload a photo: </label>
-    <input type="file" id="photo" accept="image/*" />
-
-    <br/><br/>
-
-    <input type="checkbox" id="consent" />
-    <label for="consent">I agree to the <a href="privacy.html" target="_blank">privacy policy</a>.</label>
-    
-    <br/><br/>
-    
-    <button onclick="addPerson()">Add to database</button>
-
-    <!-- show boxed face -->
-    <img id="result" width="400" style="display:none; margin-top:16px;" />
-
-    <!-- confirmation message -->
-    <p id="message"></p>
-
-    <script src="script.js"></script>
-
+        <img id="result" style="display:none;" />
+        <p id="message"></p>
+    </div>
+    <div class="section-card">
+        <a href="detection.html" class="btn btn-secondary">Detect Faces</a>
+    </div>
+    <div class="footer">
+        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>   
+    </div>    
+</div>
+ 
+<script src="script.js"></script>
 </body>
 </html>

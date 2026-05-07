@@ -28,6 +28,10 @@ function takePicture() {
     const canvas = document.getElementById('canvas');
     const ctx    = canvas.getContext('2d');
 
+    //fix canvas size to match video size
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
     // draw the current video frame onto the canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 

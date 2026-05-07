@@ -2,39 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Face Recognition</title>
+    <title>Face Recognition — Detect</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* riquadro originale — invariato */
+        .detection-wrapper {
+            position: relative;
+            width: 640px;
+            height: 480px;
+        }
+        .detection-wrapper video,
+        .detection-wrapper canvas {
+            position: absolute;
+            top: 0; left: 0;
+            pointer-events: none;
+        }
+    </style>
 </head>
-<style>
-    .container {
-    position: relative;  
-    width: 640px;
-    height: 480px;
-}
-
-video, canvas {
-    position: absolute;  
-    top: 0;
-    left: 0;
-    pointer-events: none;
-}
-</style>
 <body>
+<div class="container">
 
-    <h1>Face Recognition</h1>
+    <header class="page-header">
+        <h1>Face Recognition</h1>
+        <p class="subtitle">Real-time face detection</p>
+    </header>
 
-    <!-- ── WEBCAM SECTION ── -->
-    <h2>Detect Faces</h2>
-    <div class="container">
-    
-    <!-- video tag displays the webcam stream -->
-    <video id="webcam" autoplay playsinline width="640" height="480"></video>
-    <!-- canvas tag displays the overlay with bounding boxes -->
-    <canvas id="overlay" width="640" height="480"></canvas>
+    <div class="section-card">
+        <h2>Detect Faces</h2>
+
+        <div class="detection-wrapper">
+            <video id="webcam" autoplay playsinline width="640" height="480"></video>
+            <canvas id="overlay" width="640" height="480"></canvas>
+        </div>
+
+        <canvas id="capture" width="640" height="480" style="display:none;"></canvas>
+
+        <div class="btn-row">
+            <a href="index.html" class="btn btn-secondary">Back to Add Person</a>
+        </div>
     </div>
-    <!-- hidden canvas used to capture a frame from the video -->
-    <canvas id="capture" width="640" height="480" style="display:none;"></canvas>
 
-    <script src="detection.js"></script>
+    <div class="footer">
+        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>   
+    </div>
 
+</div>
+<script src="detection.js"></script>
 </body>
 </html>
