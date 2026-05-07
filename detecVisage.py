@@ -60,7 +60,7 @@ def FacesDetects_mediapipe(url_img : str , model_path='model/blaze_face_short_ra
                 ])
         return box , detection_result , image
     
-def FacesDetects_from_bytes(image_bytes, method, model_path_blazeface='model/blaze_face_short_range.tflite'):
+def FacesDetects_from_bytes(image_bytes, method , detector):
     """
     Détecte les visages à partir de bytes en choisissant la méthode.
     """
@@ -76,10 +76,6 @@ def FacesDetects_from_bytes(image_bytes, method, model_path_blazeface='model/bla
         return box, result, image_rgb
 
     elif method == "mediapipe":
-        base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
-        options = vision.FaceDetectorOptions(base_options=base_options)
-        
-        with vision.FaceDetector.create_from_options(options) as detector:
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
             detection_result = detector.detect(mp_image)
             
@@ -94,7 +90,7 @@ def FacesDetects_from_bytes(image_bytes, method, model_path_blazeface='model/bla
                     ])
             return box, detection_result, image_rgb
     else:
-        return "methode de detection n'est pas définie", None, None
+        return None, None, None
 
 def FacesDraw(image, list_boxes):
     """
@@ -130,10 +126,18 @@ if __name__ == "__main__" :
     succes = cv2.imwrite("images/resultats/anthony_mtcnn.jpg", image_mtcnn)
     succes = cv2.imwrite("images/resultats/anthony_mediapipe.jpg", image_mediapipe)
 
+    # Byte
+    model_path_blazeface='model/blaze_face_short_range.tflite'
+
+    base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
+    options = vision.FaceDetectorOptions(base_options=base_options)
+    my_global_detector = vision.FaceDetector.create_from_options(options)
+
     with open("images/anthony.jpg", "rb") as f:
         image_bytes = f.read()
 
-    boxes, result, img_rgb = FacesDetects_from_bytes(image_bytes, method="mediapipe")
+    boxes, result, img_rgb = FacesDetects_from_bytes(image_bytes, method="mediapipe" , detector=my_global_detector # <-- L'ajout crucial est ici
+    )
 
     if img_rgb is not None:
         img_avec_cadres_rgb = FacesDraw(img_rgb, boxes)
