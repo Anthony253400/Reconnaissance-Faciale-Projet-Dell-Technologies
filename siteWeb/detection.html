@@ -28,10 +28,11 @@ video, canvas {
     
     <!-- video tag displays the webcam stream -->
     <video id="webcam" autoplay playsinline width="640" height="480"></video>
-
-    <!-- hidden canvas — used to capture a frame from the video -->
-    <canvas id="canvas" width="640" height="480"></canvas>
+    <!-- canvas tag displays the overlay with bounding boxes -->
+    <canvas id="overlay" width="640" height="480"></canvas>
     </div>
+    <!-- hidden canvas used to capture a frame from the video -->
+    <canvas id="capture" width="640" height="480" style="display:none;"></canvas>
 
     <script src="detection.js"></script>
 

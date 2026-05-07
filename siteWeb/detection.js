@@ -18,8 +18,10 @@ async function startWebcam() {
 
 async function startDetection() {
     const video = document.getElementById('webcam');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const capture = document.getElementById('capture');
+    const ctxOver = overlay.getContext('2d');
+    const ctxCap = capture.getContext('2d');
 
     const ws = new WebSocket('ws://localhost:8000/ws/detect');
 
@@ -33,12 +35,12 @@ async function startDetection() {
         const data = JSON.parse(event.data);
         console.log(data);
         //clear canvas before drawing new boxes
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-
-        for(const [x,y,w,h] of data.faces) {
-            ctx.strokeStyle = "green";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, w, h);
+        ctxOver.clearRect(0, 0, overlay.width, overlay.height);
+        
+        for (const [x, y, w, h] of data.faces) {
+            ctxOver.strokeStyle = "green";
+            ctxOver.lineWidth = 2;
+            ctxOver.strokeRect(x, y, w, h);
         }
         sendFrame();
     };
@@ -47,8 +49,9 @@ async function startDetection() {
     ws.onerror =(error) => console.error("WebSocket error:", error);
 
     function sendFrame() {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
+
+        ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
+        capture.toBlob((blob) => {
             ws.send(blob);
         }, 'image/jpeg');
     }   
