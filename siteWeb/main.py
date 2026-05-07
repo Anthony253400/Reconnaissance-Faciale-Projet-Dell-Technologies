@@ -7,11 +7,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from detecVisage import FacesDetects_from_bytes, FacesDraw
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+import mediapipe as mp
 
 
 # create the FastAPI application
 app = FastAPI()
 
+model_path_blazeface='../model/blaze_face_short_range.tflite'
+
+base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
+options = vision.FaceDetectorOptions(base_options=base_options)
+detector = vision.FaceDetector.create_from_options(options)
 
 # CORS — allows the browser to send requests to FastAPI
 # without this, the browser blocks requests for security reasons
@@ -50,10 +58,10 @@ async def detec_video(websocket: WebSocket):
     await websocket.accept()
     while True:
         data = await websocket.receive_bytes()
-        result, image = FacesDetects_from_bytes(data)
+        box ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
 
-        faces = [face['box'] for face in result]
-        await websocket.send_json({"faces": faces})
+        #faces = [face['box'] for face in result]
+        await websocket.send_json({"faces": box})
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 

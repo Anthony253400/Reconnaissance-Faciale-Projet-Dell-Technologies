@@ -37,10 +37,10 @@ async function startDetection() {
         //clear canvas before drawing new boxes
         ctxOver.clearRect(0, 0, overlay.width, overlay.height);
         
-        for (const [x, y, w, h] of data.faces) {
+        for (const [x1, y1, x2, y2] of data.faces) {
             ctxOver.strokeStyle = "green";
             ctxOver.lineWidth = 2;
-            ctxOver.strokeRect(x, y, w, h);
+            ctxOver.strokeRect(x1, y1, x2 - x1, y2 - y1);
         }
         sendFrame();
     };
