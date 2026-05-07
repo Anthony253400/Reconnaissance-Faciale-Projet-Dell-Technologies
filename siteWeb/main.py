@@ -2,7 +2,7 @@ import sys
 import io
 import cv2
 sys.path.append('../')  # add parent directory to path to import detecVisage
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
@@ -45,4 +45,15 @@ async def add_person(
     # sends image to browser
     return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
 
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+@app.websocket("/ws/detect")
+async def detec_video(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_bytes()
+        result, image = FacesDetects_from_bytes(data)
+
+        faces = [face['box'] for face in result]
+        await websocket.send_json({"faces": faces})
+
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+
