@@ -4,7 +4,6 @@ from  mtcnn.utils.images  import  load_image
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import time
 import numpy as np
 
 
@@ -62,7 +61,18 @@ def FacesDetects_mediapipe(url_img : str , model_path='model/blaze_face_short_ra
     
 def FacesDetects_from_bytes(image_bytes, method , detector):
     """
-    Détecte les visages à partir de bytes en choisissant la méthode.
+    Detects faces from bytes by choosing the method.
+    Args:
+        image_bytes : Raw image data.
+        methode (str): Method for detecting faces: mtcnn , mediapipe.
+        detector: Required for MediaPipe. Pre-initialized template instance
+
+    Returns:
+        tuple: 
+            - box (list): A list of list in the format [x1, y1, x2, y2] which contains the rectangles of the face.
+            - result (list): The raw object returned by mtcnn or MediaPipe library. Containing the native detection data, bounding boxes, and scores.
+            - image (numpy.ndarray): The loaded image data in RGB format.
+    
     """
     nparr = np.frombuffer(image_bytes, np.uint8)
     image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -115,6 +125,7 @@ def FacesDraw(image, list_boxes):
 
 
 if __name__ == "__main__" :
+    
     url = "images/anthony.jpg" 
     box_mtcnn , y , image = FacesDetects_mtcnn(url)
     box_mediapipe , y , image = FacesDetects_mediapipe(url)
@@ -149,3 +160,4 @@ if __name__ == "__main__" :
         output_path = "images/resultats/anthony_bytes_test.jpg"
         cv2.imwrite(output_path, img_final_bgr)
 
+    
