@@ -1,15 +1,14 @@
-mediapipe==0.10.11
+mediapipe==0.10.35
 
-tensorflow            
+tensorflow==2.19.1
 torch
 torchvision
 
 opencv-python
-mediapipe==0.10.11
 insightface
 onnxruntime-gpu
 
-mtcnn
+mtcnn==1.0.0
 facenet-pytorch
 
 numpy 
