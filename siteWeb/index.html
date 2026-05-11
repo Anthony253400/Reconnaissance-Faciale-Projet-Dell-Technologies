@@ -13,14 +13,20 @@
         <h1>Face Recognition</h1>
         <p class="subtitle">Register and manage faces in the database</p>
     </header>
- 
+     <p>Take five pictures following the instructions or upload your own photos. 
+        In order to add a person to the database, you must take all five photos. 
+        Take pictures of your head from different angles to get a better prediction </p>
+    </br>
+
     <!--MAIN GRID  (webcam left and form right) -->
     <div class="main-grid">
- 
         <!-- webcam -->
         <div class="section-card">
             <h2>Webcam</h2>
- 
+            
+            <p id="instruction" style="font-size: 1.2em; font-weight: bold; text-align: center;">Look straight ahead</p>
+            <p id="step" style="text-align: center; color: gray;">Photo 1 / 5</p>
+
             <div class="webcam-wrapper">
                 <video id="webcam" autoplay playsinline></video>
             </div>
@@ -31,7 +37,29 @@
                 <button class="btn btn-secondary" onclick="takePicture()">Take a picture!</button>
             </div>
  
-            <img id="preview" style="display:none;" />
+        <!-- photo grid -->
+        <div id="photo-grid" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+    <div class="photo-slot" id="slot-0">
+        <img id="preview-0" style="display:none; width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+        <button class="btn-delete" id="delete-0" onclick="deletePhoto(0)" style="display:none;">✕</button>
+    </div>
+        <div class="photo-slot" id="slot-1">
+            <img id="preview-1" style="display:none; width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+            <button class="btn-delete" id="delete-1" onclick="deletePhoto(1)" style="display:none;">✕</button>
+        </div>
+        <div class="photo-slot" id="slot-2">
+            <img id="preview-2" style="display:none; width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+            <button class="btn-delete" id="delete-2" onclick="deletePhoto(2)" style="display:none;">✕</button>
+        </div>
+        <div class="photo-slot" id="slot-3">
+            <img id="preview-3" style="display:none; width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+            <button class="btn-delete" id="delete-3" onclick="deletePhoto(3)" style="display:none;">✕</button>
+        </div>
+        <div class="photo-slot" id="slot-4">
+            <img id="preview-4" style="display:none; width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+            <button class="btn-delete" id="delete-4" onclick="deletePhoto(4)" style="display:none;">✕</button>
+        </div>
+    </div>
         </div>
  
         <!-- personal  info -->
