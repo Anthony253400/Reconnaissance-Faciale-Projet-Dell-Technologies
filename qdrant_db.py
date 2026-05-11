@@ -3,6 +3,7 @@ from qdrant_client.models import PointStruct, VectorParams, Distance
 import uuid
 
 client = QdrantClient(host="10.233.220.118", port=6333)
+
 COLLECTION = "face"
 
 def create_collection():
@@ -27,12 +28,14 @@ def save_embedding(name, embedding):
         )]
     )
 
-def search_embedding(embedding, threshold=0.7):
-    results = client.search(
+def search_embedding(embedding, threshold=0.5):
+    results = client.query_points(
         collection_name=COLLECTION,
-        query_vector=embedding.tolist(),
+        query=embedding.tolist(),
         limit=1
-    )
-    if results and results[0].score >= threshold:
-        return results[0].payload["name"], results[0].score
+    ).points
+    if results:
+        print(f"Score grezzo: {results[0].score}")  # ← aggiungi questa riga
+        if results[0].score >= threshold:
+            return results[0].payload["name"], results[0].score
     return "Inconnu", None

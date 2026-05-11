@@ -12,7 +12,7 @@ from mediapipe.tasks.python import vision
 import mediapipe as mp
 from faceAlignment import align_crop
 from embeddings import get_embedding
-from qdrant_db import save_embedding, create_collection
+from qdrant_db import save_embedding, create_collection, search_embedding
 
 
 
@@ -71,8 +71,16 @@ async def detec_video(websocket: WebSocket):
         data = await websocket.receive_bytes()
         box ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
 
-        #faces = [face['box'] for face in result]
-        await websocket.send_json({"faces": box})
+        names = []
+        if result and result.detections:
+            face_cropped = align_crop(image, result)
+            if face_cropped is not None:
+                embedding = get_embedding(face_cropped)
+                name, score = search_embedding(embedding)
+                score_str = f"{score:.2f}" if score else "?"
+                names.append(f"{name} ({score_str})")
+
+        await websocket.send_json({"faces": box, "names": names})
 
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")

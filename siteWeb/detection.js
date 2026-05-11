@@ -33,14 +33,18 @@ async function startDetection() {
     // receive detection results from the server and draw bounding boxes
     ws.onmessage =(event) => {
         const data = JSON.parse(event.data);
-        console.log(data);
-        //clear canvas before drawing new boxes
         ctxOver.clearRect(0, 0, overlay.width, overlay.height);
-        
-        for (const [x1, y1, x2, y2] of data.faces) {
+
+        for (let i = 0; i < data.faces.length; i++) {
+            const [x1, y1, x2, y2] = data.faces[i];
             ctxOver.strokeStyle = "green";
             ctxOver.lineWidth = 2;
             ctxOver.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+            const name = data.names[i] || "";
+            ctxOver.fillStyle = "green";
+            ctxOver.font = "16px Arial";
+            ctxOver.fillText(name, x1, y1 - 5);
         }
         sendFrame();
     };
