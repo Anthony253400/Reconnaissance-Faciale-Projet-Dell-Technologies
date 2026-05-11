@@ -1,15 +1,13 @@
-mediapipe==0.10.11
+mediapipe==0.10.35
 
-tensorflow            
+tensorflow==2.19.1
 torch
 torchvision
 
 opencv-python
-mediapipe==0.10.11
-insightface
 onnxruntime-gpu
 
-mtcnn
+mtcnn==1.0.0
 facenet-pytorch
 
 numpy 
@@ -24,5 +22,8 @@ tqdm
 fastapi
 uvicorn
 python-multipart
+<<<<<<< HEAD
 
 onnxruntime
+=======
+>>>>>>> d636b1d5d1818e1051c72cf4c3c514ab42d20a0b

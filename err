@@ -1,0 +1,187 @@
+creating build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\morphable_model
+      copying insightface\thirdparty\face3d\morphable_model\fit.py -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\morphable_model
+      copying insightface\thirdparty\face3d\morphable_model\load.py -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\morphable_model
+      copying insightface\thirdparty\face3d\morphable_model\morphabel_model.py -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\morphable_model
+      copying insightface\thirdparty\face3d\morphable_model\__init__.py -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\morphable_model
+      running egg_info
+      writing insightface.egg-info\PKG-INFO
+      writing dependency_links to insightface.egg-info\dependency_links.txt
+      writing entry points to insightface.egg-info\entry_points.txt
+      writing requirements to insightface.egg-info\requires.txt
+      writing top-level names to insightface.egg-info\top_level.txt
+      reading manifest file 'insightface.egg-info\SOURCES.txt'
+      writing manifest file 'insightface.egg-info\SOURCES.txt'
+      C:\Users\team2\AppData\Local\Temp\pip-build-env-n8a064dj\overlay\Lib\site-packages\setuptools\command\build_py.py:215: _Warning: Package 'insightface.thirdparty.face3d.mesh.cython' is absent from the `packages` configuration.
+      !!
+      
+              ********************************************************************************
+              ############################
+2026-05-11 13:56:29.591 [info]             # Package would be ignored #
+              ############################
+              Python recognizes 'insightface.thirdparty.face3d.mesh.cython' as an importable package[^1],
+              but it is absent from setuptools' `packages` configuration.
+      
+              This leads to an ambiguous overall configuration. If you want to distribute this
+              package, please make sure that 'insightface.thirdparty.face3d.mesh.cython' is explicitly added
+              to the `packages` configuration field.
+      
+              Alternatively, you can also rely on setuptools' discovery methods
+2026-05-11 13:56:29.591 [info]          (for example by using `find_namespace_packages(...)`/`find_namespace:`
+              instead of `find_packages(...)`/`find:`).
+      
+              You can read more about "package discovery" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+      
+              If you don't want 'insightface.thirdparty.face3d.mesh.cython' to be distributed and are
+              already explicitly excluding 'insightface.thirdparty.face3d.mesh.cython' via
+2026-05-11 13:56:29.592 [info]          `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+              you can try to use `exclude_package_data`, or `include-package-data=False` in
+              combination with a more fine grained `package-data` configuration.
+      
+              You can read more about "package data files" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+2026-05-11 13:56:29.592 [info]     
+      
+              [^1]: For Python, any directory (with suitable naming) can be imported,
+                    even if it does not contain any `.py` files.
+                    On the other hand, currently there is no concept of package data
+                    directory, all directories are treated like packages.
+              ********************************************************************************
+2026-05-11 13:56:29.593 [info]     
+      !!
+        check.warn(importable)
+      C:\Users\team2\AppData\Local\Temp\pip-build-env-n8a064dj\overlay\Lib\site-packages\setuptools\command\build_py.py:215: _Warning: Package 'insightface.data.images' is absent from the `packages` configuration.
+      !!
+      
+              ********************************************************************************
+2026-05-11 13:56:29.593 [info]          ############################
+              # Package would be ignored #
+              ############################
+              Python recognizes 'insightface.data.images' as an importable package[^1],
+              but it is absent from setuptools' `packages` configuration.
+2026-05-11 13:56:29.594 [info]          This leads to an ambiguous overall configuration. If you want to distribute this
+              package, please make sure that 'insightface.data.images' is explicitly added
+              to the `packages` configuration field.
+      
+              Alternatively, you can also rely on setuptools' discovery methods
+              (for example by using `find_namespace_packages(...)`/`find_namespace:`
+              instead of `find_packages(...)`/`find:`).
+2026-05-11 13:56:29.594 [info]     
+              You can read more about "package discovery" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+      
+              If you don't want 'insightface.data.images' to be distributed and are
+2026-05-11 13:56:29.594 [info]          already explicitly excluding 'insightface.data.images' via
+              `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+              you can try to use `exclude_package_data`, or `include-package-data=False` in
+              combination with a more fine grained `package-data` configuration.
+      
+              You can read more about "package data files" on setuptools documentation page:
+2026-05-11 13:56:29.595 [info]             - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+      
+      
+              [^1]: For Python, any directory (with suitable naming) can be imported,
+                    even if it does not contain any `.py` files.
+                    On the other hand, currently there is no concept of package data
+                    directory, all directories are treated like packages.
+2026-05-11 13:56:29.595 [info] 
+              ********************************************************************************
+      
+      !!
+        check.warn(importable)
+      C:\Users\team2\AppData\Local\Temp\pip-build-env-n8a064dj\overlay\Lib\site-packages\setuptools\command\build_py.py:215: _Warning: Package 'insightface.data.objects' is absent from the `packages` configuration.
+      !!
+2026-05-11 13:56:29.596 [info] 
+      
+              ********************************************************************************
+              ############################
+              # Package would be ignored #
+2026-05-11 13:56:29.596 [info]          ############################
+              Python recognizes 'insightface.data.objects' as an importable package[^1],
+              but it is absent from setuptools' `packages` configuration.
+      
+              This leads to an ambiguous overall configuration. If you want to distribute this
+              package, please make sure that 'insightface.data.objects' is explicitly added
+              to the `packages` configuration field.
+2026-05-11 13:56:29.596 [info]       
+              Alternatively, you can also rely on setuptools' discovery methods
+              (for example by using `find_namespace_packages(...)`/`find_namespace:`
+              instead of `find_packages(...)`/`find:`).
+      
+              You can read more about "package discovery" on setuptools documentation page:
+2026-05-11 13:56:29.597 [info] 
+              - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+      
+              If you don't want 'insightface.data.objects' to be distributed and are
+              already explicitly excluding 'insightface.data.objects' via
+              `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+              you can try to use `exclude_package_data`, or `include-package-data=False` in
+2026-05-11 13:56:29.597 [info] 
+              combination with a more fine grained `package-data` configuration.
+      
+              You can read more about "package data files" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+2026-05-11 13:56:29.598 [info]     
+              [^1]: For Python, any directory (with suitable naming) can be imported,
+                    even if it does not contain any `.py` files.
+                    On the other hand, currently there is no concept of package data
+                    directory, all directories are treated like packages.
+              ********************************************************************************
+2026-05-11 13:56:29.598 [info]       !!
+        check.warn(importable)
+      creating build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core.cpp -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core.h -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core_cython.cpp -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+2026-05-11 13:56:29.598 [info]     creating build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\Tom_Hanks_54745.png -> build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\mask_black.jpg -> build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\mask_blue.jpg -> build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\mask_green.jpg -> build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\mask_white.jpg -> build\lib.win-amd64-cpython-310\insightface\data\images
+      copying insightface\data\images\t1.jpg -> build\lib.win-amd64-cpython-310\insightface\data\images
+2026-05-11 13:56:29.599 [info] 
+      creating build\lib.win-amd64-cpython-310\insightface\data\objects
+      copying insightface\data\objects\meanshape_68.pkl -> build\lib.win-amd64-cpython-310\insightface\data\objects
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core_cython.c -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core_cython.cpp -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\mesh_core_cython.pyx -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+      copying insightface\thirdparty\face3d\mesh\cython\setup.py -> build\lib.win-amd64-cpython-310\insightface\thirdparty\face3d\mesh\cython
+2026-05-11 13:56:29.599 [info]     running build_ext
+      building 'insightface.thirdparty.face3d.mesh.cython.mesh_core_cython' extension
+      error: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+2026-05-11 13:56:29.607 [info]   ERROR: Failed building wheel for insightface
+2026-05-11 13:56:29.608 [info] Failed to build insightface
+2026-05-11 13:56:29.609 [info] error: failed-wheel-build-for-install
+
+× Failed to build installable wheels for some pyproject.toml based projects
+2026-05-11 13:56:29.610 [info] ╰─> insightface
+2026-05-11 13:56:32.792 [info] Traceback (most recent call last):
+  File "c:\Users\team2\.vscode\extensions\ms-python.python-2026.4.0-win32-x64\python_files\create_venv.py", line 96, in run_process
+2026-05-11 13:56:32.794 [info]     subprocess.run(args, cwd=os.getcwd(), check=True)  # noqa: PTH109
+  File "C:\Users\team2\AppData\Local\Programs\Python\Python310\lib\subprocess.py", line 526, in run
+2026-05-11 13:56:32.797 [info]     raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError
+2026-05-11 13:56:32.798 [info] : Command '['c:\\Users\\team2\\Desktop\\Reconnaissance-Faciale-Projet-Dell-Technologies\\.venv\\Scripts\\python.exe', '-m', 'pip', 'install', '-r', 'c:\\Users\\team2\\Desktop\\Reconnaissance-Faciale-Projet-Dell-Technologies\\requirement.txt']' returned non-zero exit status 1.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Users\team2\.vscode\extensions\ms-python.python-2026.4.0-win32-x64\python_files\create_venv.py", line 271, in <module>
+2026-05-11 13:56:32.799 [info]     main(sys.argv[1:])
+  File "c:\Users\team2\.vscode\extensions\ms-python.python-2026.4.0-win32-x64\python_files\create_venv.py", line 263, in main
+2026-05-11 13:56:32.801 [info]     install_requirements(venv_path, requirements)
+  File "c:\Users\team2\.vscode\extensions\ms-python.python-2026.4.0-win32-x64\python_files\create_venv.py", line 125, in install_requirements
+    run_process(
+  File "c:\Users\team2\.vscode\extensions\ms-python.python-2026.4.0-win32-x64\python_files\create_venv.py", line 98, in run_process
+2026-05-11 13:56:32.804 [info]     raise VenvError(error_message) from exc
+__main__.VenvError: CREATE_VENV.PIP_FAILED_INSTALL_REQUIREMENTS
+2026-05-11 13:56:32.851 [error] Error while running venv creation script:  CREATE_VENV.PIP_FAILED_INSTALL_REQUIREMENTS
+2026-05-11 13:56:32.851 [error] CREATE_VENV.PIP_FAILED_INSTALL_REQUIREMENTS
