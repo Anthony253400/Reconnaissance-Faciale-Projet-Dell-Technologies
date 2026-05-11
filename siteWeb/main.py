@@ -53,12 +53,12 @@ async def add_person(
     image_bytes = buffer.tobytes()
 
     print(f"Received: {firstName} {lastName}, file: {photo.filename}")
-    face_cropped = align_crop(image, result)
-
-    embedding = get_embedding(face_cropped)
-    print(f"Embedding shape: {embedding.shape}")
-
+    crops = align_crop(image, result)
     create_collection()
+
+    for face_cropped in crops:
+        embedding = get_embedding(face_cropped)
+        print(f"Embedding shape: {embedding.shape}")
     save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
@@ -73,8 +73,8 @@ async def detec_video(websocket: WebSocket):
 
         names = []
         if result and result.detections:
-            face_cropped = align_crop(image, result)
-            if face_cropped is not None:
+            crops = align_crop(image, result)
+            for face_cropped in crops:
                 embedding = get_embedding(face_cropped)
                 name, score = search_embedding(embedding)
                 score_str = f"{score:.2f}" if score else "?"

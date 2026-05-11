@@ -19,14 +19,14 @@ def align_crop(image, listFace):
             - face_final_bgr (numpy.ndarray): face align and crop.
     """
     im_height, im_width = image.shape[:2]
+    crops = []  # lista invece di un solo crop
+    
     for detection in listFace.detections:
         keypoints = detection.keypoints
         
-        # 0:  left, 1: right, 
         left_eye = keypoints[0]
         right_eye = keypoints[1]
 
-        # Transformation en pixels (im_width et im_height de ton image d'origine)
         left_eye_px = (int(left_eye.x * im_width), int(left_eye.y * im_height))
         right_eye_px = (int(right_eye.x * im_width), int(right_eye.y * im_height))
         dY = right_eye_px[1] - left_eye_px[1]
@@ -35,21 +35,18 @@ def align_crop(image, listFace):
 
         eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (right_eye_px[1] + right_eye_px[1]) / 2)
 
-        #rotation 
         M = cv2.getRotationMatrix2D(eye_center, angle, scale=1.0)
         rotated_img = cv2.warpAffine(image, M, (im_width, im_height), flags=cv2.INTER_CUBIC)
 
-        #crop
         bbox = detection.bounding_box
         x, y, bw, bh = int(bbox.origin_x), int(bbox.origin_y), int(bbox.width), int(bbox.height)
-    
         face_crop = rotated_img[max(0, y):min(im_height, y+bh), max(0, x):min(im_width, x+bw)]
 
         face_final = cv2.resize(face_crop, (112, 112))
         face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
-        succes = cv2.imwrite("images/resultats/crop/penche.jpg", face_final_bgr)
-        return face_final_bgr
-
+        crops.append(face_final_bgr)  # aggiungi alla lista invece di return
+    
+    return crops  # ritorna tutte le facce
 
 
 
