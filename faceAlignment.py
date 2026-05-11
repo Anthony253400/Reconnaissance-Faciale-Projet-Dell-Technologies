@@ -19,7 +19,7 @@ def align_crop(image, listFace):
             - face_final_bgr (numpy.ndarray): face align and crop.
     """
     im_height, im_width = image.shape[:2]
-    crops = []  # lista invece di un solo crop
+    crops = []  
     
     for detection in listFace.detections:
         keypoints = detection.keypoints
@@ -33,7 +33,7 @@ def align_crop(image, listFace):
         dX = right_eye_px[0] - left_eye_px[0]            
         angle = np.degrees(np.arctan2(dY, dX))
 
-        eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (right_eye_px[1] + right_eye_px[1]) / 2)
+        eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (left_eye_px[1]  + right_eye_px[1]) / 2)
 
         M = cv2.getRotationMatrix2D(eye_center, angle, scale=1.0)
         rotated_img = cv2.warpAffine(image, M, (im_width, im_height), flags=cv2.INTER_CUBIC)
@@ -44,9 +44,9 @@ def align_crop(image, listFace):
 
         face_final = cv2.resize(face_crop, (112, 112))
         face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
-        crops.append(face_final_bgr)  # aggiungi alla lista invece di return
+        crops.append(face_final_bgr)
     
-    return crops  # ritorna tutte le facce
+    return crops 
 
 
 
