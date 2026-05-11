@@ -2,17 +2,20 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
 import uuid
 
-client = QdrantClient(host="localhost", port=6333)
+client = QdrantClient(host="10.233.220.118", port=6333)
 COLLECTION = "face"
 
 def create_collection():
-    client.create_collection(
-        collection_name=COLLECTION,
-        vectors_config=VectorParams(
-            size=512,
-            distance=Distance.COSINE
+    existing = client.get_collections().collections
+    names = [c.name for c in existing]
+    if COLLECTION not in names:
+        client.create_collection(
+            collection_name=COLLECTION,
+            vectors_config=VectorParams(
+                size=512,
+                distance=Distance.COSINE
+            )
         )
-    )
 
 def save_embedding(name, embedding):
     client.upsert(

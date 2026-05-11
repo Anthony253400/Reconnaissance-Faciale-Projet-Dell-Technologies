@@ -12,7 +12,7 @@ from mediapipe.tasks.python import vision
 import mediapipe as mp
 from faceAlignment import align_crop
 from embeddings import get_embedding
-from qdrant_db import save_embedding
+from qdrant_db import save_embedding, create_collection
 
 
 
@@ -58,6 +58,7 @@ async def add_person(
     embedding = get_embedding(face_cropped)
     print(f"Embedding shape: {embedding.shape}")
 
+    create_collection()
     save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
