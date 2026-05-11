@@ -3,7 +3,7 @@ from qdrant_client.models import PointStruct, VectorParams, Distance
 import uuid
 
 client = QdrantClient(host="localhost", port=6333)
-COLLECTION = "faces"
+COLLECTION = "face"
 
 def create_collection():
     client.create_collection(

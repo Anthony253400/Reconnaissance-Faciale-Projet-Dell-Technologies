@@ -24,3 +24,5 @@ tqdm
 fastapi
 uvicorn
 python-multipart
+
+onnxruntime

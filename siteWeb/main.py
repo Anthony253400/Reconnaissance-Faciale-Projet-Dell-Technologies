@@ -58,7 +58,7 @@ async def add_person(
     embedding = get_embedding(face_cropped)
     print(f"Embedding shape: {embedding.shape}")
 
-    #save_embedding(f"{firstName} {lastName}", embedding)
+    save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
     return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
