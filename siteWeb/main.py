@@ -70,6 +70,7 @@ async def detec_video(websocket: WebSocket):
     while True:
         data = await websocket.receive_bytes()
         box ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
+        print(f"Box: {box}, result: {result}")
 
         names = []
         if result and result.detections:
