@@ -19,8 +19,8 @@ def align_crop(image, listFace):
             - face_final_bgr (numpy.ndarray): face align and crop.
     """
     im_height, im_width = image.shape[:2]
-    crops = []  
-    
+
+    crops = [] 
     for detection in listFace.detections:
         keypoints = detection.keypoints
         
@@ -44,9 +44,11 @@ def align_crop(image, listFace):
 
         face_final = cv2.resize(face_crop, (112, 112))
         face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
+
         crops.append(face_final_bgr)
     
     return crops 
+
 
 
 
