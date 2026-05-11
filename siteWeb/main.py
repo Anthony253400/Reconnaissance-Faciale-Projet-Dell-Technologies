@@ -10,6 +10,10 @@ from detecVisage import FacesDetects_from_bytes, FacesDraw
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import mediapipe as mp
+from faceAlignment import align_crop
+from embeddings import get_embedding
+from qdrant_db import save_embedding
+
 
 
 # create the FastAPI application
@@ -49,6 +53,12 @@ async def add_person(
     image_bytes = buffer.tobytes()
 
     print(f"Received: {firstName} {lastName}, file: {photo.filename}")
+    face_cropped = align_crop(image, result)
+
+    embedding = get_embedding(face_cropped)
+    print(f"Embedding shape: {embedding.shape}")
+
+    #save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
     return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
@@ -62,6 +72,7 @@ async def detec_video(websocket: WebSocket):
 
         #faces = [face['box'] for face in result]
         await websocket.send_json({"faces": box})
+
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 

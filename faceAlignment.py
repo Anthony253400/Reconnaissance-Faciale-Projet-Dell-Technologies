@@ -5,8 +5,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
 
-im_width = 1920
-im_height = 1080
+
 
 def align_crop(image, listFace):
     """
@@ -19,6 +18,7 @@ def align_crop(image, listFace):
         tuple: 
             - face_final_bgr (numpy.ndarray): face align and crop.
     """
+    im_height, im_width = image.shape[:2]
     for detection in listFace.detections:
         keypoints = detection.keypoints
         
