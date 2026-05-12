@@ -57,13 +57,13 @@ async def add_person(
     _, buffer = cv2.imencode('.jpg', image_boxes_bgr)
     image_bytes = buffer.tobytes()
 
-    print(f"Received: {firstName} {lastName}, file: {photo.filename}")
+    #print(f"Received: {firstName} {lastName}, file: {photo.filename}")
     crops = align_crop(image, result)
     create_collection()
 
     for face_cropped in crops:
         embedding = get_embedding(face_cropped)
-        print(f"Embedding shape: {embedding.shape}")
+        #print(f"Embedding shape: {embedding.shape}")
     save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
