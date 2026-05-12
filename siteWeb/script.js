@@ -8,6 +8,8 @@ const instructions = [
 
 let currentStep = 0;
 let capturedPhotos = [null, null, null, null, null];
+const MIRROR = true; // set to true if your webcam feed is mirrored (front camera)
+
 
 // ── WEBCAM ──
 // starts the webcam and connects the stream to the <video> tag
@@ -17,7 +19,9 @@ async function startWebcam() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
         // connect the stream to the <video> tag
-        document.getElementById('webcam').srcObject = stream;
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        video.style.transform = MIRROR ? 'scaleX(-1)' : '';
 
     } catch (error) {
         alert("Cannot access camera: " + error.message);
