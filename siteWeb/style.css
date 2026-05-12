@@ -322,3 +322,25 @@ body {
  
   .main-grid { grid-template-columns: 1fr; }
 }
+.photo-slot {
+    position: relative;
+    width: 90px;
+    height: 90px;
+}
+
+.btn-delete {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+}
