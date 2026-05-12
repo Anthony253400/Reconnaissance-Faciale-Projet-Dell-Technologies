@@ -6,13 +6,15 @@ from fastapi import FastAPI, UploadFile, File, Form, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
-from detecVisage import FacesDetects_from_bytes, FacesDraw
+from detecVisage import FacesDetects_from_bytes
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import mediapipe as mp
 from faceAlignment import align_crop
 from embeddings import get_embedding
 from qdrant_db import save_embedding, create_collection, search_embedding
+from DrawBox import  DrawBox , color_name_to_rgb
+from bodyDetection import BodyDetect_from_bytes
 
 
 
@@ -20,6 +22,8 @@ from qdrant_db import save_embedding, create_collection, search_embedding
 app = FastAPI()
 
 model_path_blazeface='../model/blaze_face_short_range.tflite'
+model_path_yolov = cv2.dnn.readNetFromONNX("../model/yolov8n.onnx")
+
 
 base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
 options = vision.FaceDetectorOptions(base_options=base_options)
@@ -44,8 +48,9 @@ async def add_person(
     photo:     UploadFile = File(...)
 ):
     contents = await photo.read()
-    box, result, image = FacesDetects_from_bytes(contents,"mediapipe",detector)
-    image_boxed = FacesDraw(image, box)
+    boxes_face, result, image = FacesDetects_from_bytes(contents,"mediapipe",detector)
+
+    image_boxed = DrawBox(image, boxes_face, 'green')
 
     # convert the boxed image to bytes
     image_boxes_bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
@@ -69,8 +74,8 @@ async def detec_video(websocket: WebSocket):
     await websocket.accept()
     while True:
         data = await websocket.receive_bytes()
-        box ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
-        print(f"Box: {box}, result: {result}")
+        boxes_face ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
+        boxes_body, confidence, image = BodyDetect_from_bytes(data, model_path_yolov)
 
         names = []
         if result and result.detections:
@@ -81,7 +86,10 @@ async def detec_video(websocket: WebSocket):
                 score_str = f"{score:.2f}" if score else "?"
                 names.append(f"{name} ({score_str})")
 
-        await websocket.send_json({"faces": box, "names": names})
+        await websocket.send_json({"faces": boxes_face , "body":boxes_body ,  "names": names})
+
+
+
 
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")

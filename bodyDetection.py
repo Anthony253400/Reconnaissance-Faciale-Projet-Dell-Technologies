@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from DrawBox import DrawBox
+from DrawBox import DrawBox ,color_name_to_rgb
 
 
 
@@ -100,10 +100,10 @@ def BodyDetect_from_bytes(image_bytes, detector):
 if __name__ == "__main__" :
         net = cv2.dnn.readNetFromONNX("model/yolov8n.onnx")
         image_path = 'images/anthony_body2.jpg'
-        output_path =('images/resultats/anthony_body_detecte_BYTES.jpg')
+        output_path =('images/resultats/anthony_body_detecte_ROUGE.jpg')
 
         box ,confidences ,image =BodyDetect(image_path,net)
-        image_draw =  DrawBox(image , box)
+        image_draw =  DrawBox(image , box ,"red")
         image_draw = cv2.cvtColor(image_draw, cv2.COLOR_RGB2BGR)
         succes = cv2.imwrite(output_path, image_draw)
 
@@ -113,9 +113,9 @@ if __name__ == "__main__" :
 
         boxes, confidences, image = BodyDetect_from_bytes(image_bytes, net)
 
-        image_draw = DrawBox(image, boxes)
+        image_draw = DrawBox(image, boxes, "green")
         image_draw = cv2.cvtColor(image_draw, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(output_path, image_draw)
+        cv2.imwrite('images/resultats/anthony_body_detecte_BYTES.jpg', image_draw)
   
 
 
