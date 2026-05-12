@@ -56,6 +56,14 @@ async function startDetection() {
             ctxOver.font = "16px Arial";
             ctxOver.fillText(name, drawX1, y1 - 5);
         }
+         for (let i = 0; i < data.body.length; i++) {
+        const [x1, y1, x2, y2] = data.body[i];
+        const drawX1 = MIRROR ? overlay.width - x2 : x1;
+        const drawX2 = MIRROR ? overlay.width - x1 : x2;
+        ctxOver.strokeStyle = "red";
+        ctxOver.lineWidth = 2;
+        ctxOver.strokeRect(drawX1, y1, drawX2 - drawX1, y2 - y1);
+    }
         sendFrame();
     };
 
