@@ -4,6 +4,8 @@ import uuid
 
 client = QdrantClient(host="10.233.220.118", port=6333)
 
+#client = QdrantClient(host="localhost", port=6333)
+
 COLLECTION = "face"
 
 def create_collection():

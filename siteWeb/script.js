@@ -1,3 +1,16 @@
+const instructions = [
+    "Look straight ahead",
+    "Look to the right",
+    "Look to the left",
+    "Look up",
+    "Look down"
+];
+
+let currentStep = 0;
+let capturedPhotos = [null, null, null, null, null];
+const MIRROR = true; // set to true if your webcam feed is mirrored (front camera)
+
+
 // ── WEBCAM ──
 // starts the webcam and connects the stream to the <video> tag
 async function startWebcam() {
@@ -6,7 +19,9 @@ async function startWebcam() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
         // connect the stream to the <video> tag
-        document.getElementById('webcam').srcObject = stream;
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        video.style.transform = MIRROR ? 'scaleX(-1)' : '';
 
     } catch (error) {
         alert("Cannot access camera: " + error.message);
@@ -20,35 +35,53 @@ startWebcam();
 // ── TAKE PICTURE ──
 // captures the current video frame and saves it as a file
 
-// global variable to store the captured photo
-let capturedPhoto = null;
-
 function takePicture() {
+    // trova il primo slot vuoto
+    const slotIndex = capturedPhotos.findIndex(p => p === null);
+    if (slotIndex === -1) return;  // tutti e 5 pieni
+
     const video  = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
     const ctx    = canvas.getContext('2d');
 
-    //fix canvas size to match video size
-    canvas.width = video.videoWidth;
+    canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    // draw the current video frame onto the canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // show a preview of the captured photo
-    const preview = document.getElementById('preview');
-    preview.src = canvas.toDataURL('image/jpeg');
-    preview.style.display = 'block';
-
-    // convert the canvas to a File object (like a real uploaded file)
     canvas.toBlob((blob) => {
-        capturedPhoto = new File([blob], "photo.jpg", { type: "image/jpeg" });
+        const file = new File([blob], `photo_${slotIndex}.jpg`, { type: "image/jpeg" });
+        capturedPhotos[slotIndex] = file;
+
+        const preview = document.getElementById(`preview-${slotIndex}`);
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = 'block';
+
+        document.getElementById(`delete-${slotIndex}`).style.display = 'block';
+
+        const filled = capturedPhotos.filter(p => p !== null).length;
+        if (filled < 5) {
+            const nextEmpty = capturedPhotos.findIndex(p => p === null);
+            document.getElementById('instruction').textContent = instructions[nextEmpty];
+            document.getElementById('step').textContent = `Photo ${filled + 1} / 5`;
+        } else {
+            document.getElementById('instruction').textContent = "All photos taken!";
+            document.getElementById('step').textContent = "You can now add to database";
+        }
     }, 'image/jpeg');
 }
 
+function deletePhoto(index) {
+    capturedPhotos[index] = null;
 
-// ── ADD PERSON ──
-// collects form data and sends it to FastAPI
+    document.getElementById(`preview-${index}`).style.display = 'none';
+    document.getElementById(`delete-${index}`).style.display = 'none';
+
+    const filled = capturedPhotos.filter(p => p !== null).length;
+    const nextEmpty = capturedPhotos.findIndex(p => p === null);
+    document.getElementById('instruction').textContent = instructions[nextEmpty];
+    document.getElementById('step').textContent = `Photo ${filled + 1} / 5`;
+}
+
 async function addPerson() {
     if (!document.getElementById('consent').checked) {
         alert("You must accept the privacy policy.");
@@ -57,48 +90,47 @@ async function addPerson() {
 
     const firstName = document.getElementById('firstName').value;
     const lastName  = document.getElementById('lastName').value;
-
-    // use the captured photo if available, otherwise use the uploaded file
-    const photo = capturedPhoto || document.getElementById('photo').files[0];
-
-    // basic validation
     const nameRegex = /^[a-zA-ZÀ-ÿ]{1,}$/;
 
-    // check if all fields are filled and if the photo is valid
-    if (!firstName || !lastName || !photo) {
-        alert("Please fill in all fields and provide a photo.");
+    if (!firstName || !lastName) {
+        alert("Please fill in all fields.");
         return;
     }
     if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
         alert("Names can only contain letters.");
         return;
     }
-    if (!photo.type.startsWith('image/')) {
-        alert("Please upload a valid image file.");
+    if (capturedPhotos.length < 5) {
+        alert("Please take all 5 photos first.");
         return;
     }
-    
-    // FormData lets us send text + file together in one request
-    const formData = new FormData();
-    formData.append('firstName', firstName);
-    formData.append('lastName', lastName);
-    formData.append('photo', photo);
 
-    // send the data to FastAPI with fetch()
     try {
-        const response = await fetch('http://localhost:8000/add', {
-            method: 'POST',
-            body: formData
-        });
+        for (let i = 0; i < capturedPhotos.length; i++) {
+            const formData = new FormData();
+            formData.append('firstName', firstName);
+            formData.append('lastName', lastName);
+            formData.append('photo', capturedPhotos[i]);
 
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
+            await fetch('http://localhost:8000/add', {
+                method: 'POST',
+                body: formData
+            });
+        }
 
-        const img = document.getElementById('result');
-        img.src = imageUrl;
-        img.style.display = 'block';
+        document.getElementById('message').textContent = "Person added successfully!";
 
-        document.getElementById('message').textContent = "Person added successfully!";  
+        // reset
+        currentStep = 0;
+        capturedPhotos = [];
+        document.getElementById('instruction').textContent = instructions[0];
+        document.getElementById('step').textContent = "Photo 1 / 5";
+        for (let i = 0; i < 5; i++) {
+            const preview = document.getElementById(`preview-${i}`);
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+
     } catch (error) {
         document.getElementById('message').textContent = "Error: server not available";
     }

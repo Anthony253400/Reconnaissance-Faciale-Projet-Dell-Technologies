@@ -1,3 +1,11 @@
+const MIRROR = true; // set to true if your webcam feed is mirrored (front camera)
+
+async function init() {
+    document.getElementById('webcam').style.transform = MIRROR ? 'scaleX(-1)' : '';
+    await startWebcam();
+    startDetection();
+}
+
 // -- WEBCAM --
 // starts the webcam and connects the stream to the <video> tag
 async function startWebcam() {
@@ -31,15 +39,17 @@ async function startDetection() {
         setInterval(sendFrame, 100); // send frame every 100ms
     };
     // receive detection results from the server and draw bounding boxes
-    ws.onmessage =(event) => {
-        const data = JSON.parse(event.data);
-        ctxOver.clearRect(0, 0, overlay.width, overlay.height);
+    ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    ctxOver.clearRect(0, 0, overlay.width, overlay.height);
 
-        for (let i = 0; i < data.faces.length; i++) {
-            const [x1, y1, x2, y2] = data.faces[i];
-            ctxOver.strokeStyle = "green";
-            ctxOver.lineWidth = 2;
-            ctxOver.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    for (let i = 0; i < data.faces.length; i++) {
+        const [x1, y1, x2, y2] = data.faces[i];
+        const drawX1 = MIRROR ? overlay.width - x2 : x1;
+        const drawX2 = MIRROR ? overlay.width - x1 : x2;
+        ctxOver.strokeStyle = "green";
+        ctxOver.lineWidth = 2;
+        ctxOver.strokeRect(drawX1, y1, drawX2 - drawX1, y2 - y1);
 
             const name = data.names[i] || "";
             ctxOver.fillStyle = "green";
@@ -63,12 +73,4 @@ async function startDetection() {
 }  
 }
 
-
-async function init() {
-    // start the webcam automatically when the page loads
-    await startWebcam();
-
-    // start face detection after webcam is ready
-    startDetection();
-}
 init();
