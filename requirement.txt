@@ -24,3 +24,4 @@ uvicorn
 python-multipart
 qdrant_client
 websockets
+ultralytics0

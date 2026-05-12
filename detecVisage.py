@@ -1,10 +1,11 @@
-import cv2
 from mtcnn import MTCNN
 from  mtcnn.utils.images  import  load_image
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
+import cv2
+from DrawBox import DrawBox
 
 
 def FacesDetects_mtcnn(url_img : str ):
@@ -102,24 +103,6 @@ def FacesDetects_from_bytes(image_bytes, method , detector):
     else:
         return None, None, None
 
-def FacesDraw(image, list_boxes):
-    """
-    Draws bounding boxes around detected faces on the image.
-    
-    Args:
-        - image (numpy.ndarray): The original image data in RGB format.
-        - list_boxes (list): A list of list in the format [x1, y1, x2, y2] which contains the rectangles of the face.
-
-    Returns:
-        - img_copy (numpy.ndarray): A copy of the input image with bounding boxes drawn.
-
-    """
-    img_copy = image.copy()
-    for box in list_boxes:
-        x1, y1, x2, y2 = box
-        cv2.rectangle(img_copy, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-    return img_copy
-
 
 
 
@@ -130,8 +113,8 @@ if __name__ == "__main__" :
     box_mtcnn , y , image = FacesDetects_mtcnn(url)
     box_mediapipe , y , image = FacesDetects_mediapipe(url)
 
-    image_mtcnn =  FacesDraw(image , box_mtcnn)
-    image_mediapipe =  FacesDraw(image , box_mediapipe)
+    image_mtcnn =  DrawBox(image , box_mtcnn)
+    image_mediapipe =  DrawBox(image , box_mediapipe)
 
     image_mtcnn = cv2.cvtColor(image_mtcnn, cv2.COLOR_RGB2BGR)
     image_mediapipe = cv2.cvtColor(image_mediapipe, cv2.COLOR_RGB2BGR)
@@ -144,6 +127,7 @@ if __name__ == "__main__" :
 
     base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
     options = vision.FaceDetectorOptions(base_options=base_options)
+    """
     my_global_detector = vision.FaceDetector.create_from_options(options)
 
     with open("images/anthony.jpg", "rb") as f:
@@ -151,13 +135,21 @@ if __name__ == "__main__" :
 
     boxes, result, img_rgb = FacesDetects_from_bytes(image_bytes, method="mediapipe" , detector=my_global_detector # <-- L'ajout crucial est ici
     )
+    """
+    with vision.FaceDetector.create_from_options(options) as my_global_detector:
+        with open("images/anthony.jpg", "rb") as f:
+            image_bytes = f.read()
+
+        boxes, result, img_rgb = FacesDetects_from_bytes(
+            image_bytes, method="mediapipe", detector=my_global_detector
+        )
 
     if img_rgb is not None:
-        img_avec_cadres_rgb = FacesDraw(img_rgb, boxes)
+        img_avec_cadres_rgb = DrawBox(img_rgb, boxes)
     
         img_final_bgr = cv2.cvtColor(img_avec_cadres_rgb, cv2.COLOR_RGB2BGR)
     
-        output_path = "images/resultats/anthony_bytes_test.jpg"
+        output_path = "images/resultats/anthony_bytes_tests.jpg"
         cv2.imwrite(output_path, img_final_bgr)
 
     
