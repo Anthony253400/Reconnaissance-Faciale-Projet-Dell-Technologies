@@ -36,7 +36,7 @@ async function startDetection() {
     //open WebSocket connection and start sending frames 
     ws.onopen =() =>  {
         console.log("WebSocket connected");
-        setInterval(sendFrame, 100); // send frame every 100ms
+        sendFrame(); 
     };
     // receive detection results from the server and draw bounding boxes
     ws.onmessage = (event) => {
@@ -54,8 +54,9 @@ async function startDetection() {
             const name = data.names[i] || "";
             ctxOver.fillStyle = "green";
             ctxOver.font = "16px Arial";
-            ctxOver.fillText(name, x1, y1 - 5);
+            ctxOver.fillText(name, drawX1, y1 - 5);
         }
+        sendFrame();
     };
 
     ws.onclose =() => console.log("WebSocket disconnected");

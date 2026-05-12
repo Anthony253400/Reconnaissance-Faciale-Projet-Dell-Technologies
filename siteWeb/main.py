@@ -52,13 +52,13 @@ async def add_person(
     _, buffer = cv2.imencode('.jpg', image_boxes_bgr)
     image_bytes = buffer.tobytes()
 
-    print(f"Received: {firstName} {lastName}, file: {photo.filename}")
+    #print(f"Received: {firstName} {lastName}, file: {photo.filename}")
     crops = align_crop(image, result)
     create_collection()
 
     for face_cropped in crops:
         embedding = get_embedding(face_cropped)
-        print(f"Embedding shape: {embedding.shape}")
+        #print(f"Embedding shape: {embedding.shape}")
     save_embedding(f"{firstName} {lastName}", embedding)
 
     # sends image to browser
@@ -70,7 +70,7 @@ async def detec_video(websocket: WebSocket):
     while True:
         data = await websocket.receive_bytes()
         box ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
-        print(f"Box: {box}, result: {result}")
+        #print(f"Box: {box}, result: {result}")
 
         names = []
         if result and result.detections:

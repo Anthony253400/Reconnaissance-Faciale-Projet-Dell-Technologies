@@ -37,7 +37,7 @@ def search_embedding(embedding, threshold=0.5):
         limit=1
     ).points
     if results:
-        print(f"Score grezzo: {results[0].score}")  # ← aggiungi questa riga
+        #print(f"Score : {results[0].score}")  
         if results[0].score >= threshold:
             return results[0].payload["name"], results[0].score
     return "Inconnu", None
