@@ -28,7 +28,7 @@ async function startDetection() {
     //open WebSocket connection and start sending frames 
     ws.onopen =() =>  {
         console.log("WebSocket connected");
-        sendFrame();
+        setInterval(sendFrame, 100); // send frame every 100ms
     };
     // receive detection results from the server and draw bounding boxes
     ws.onmessage =(event) => {
@@ -46,19 +46,21 @@ async function startDetection() {
             ctxOver.font = "16px Arial";
             ctxOver.fillText(name, x1, y1 - 5);
         }
-        sendFrame();
     };
 
     ws.onclose =() => console.log("WebSocket disconnected");
     ws.onerror =(error) => console.error("WebSocket error:", error);
 
+    // capture the current video frame and send it to the server 
+    // if the WebSocket is open and there are no pending messages in the buffer
     function sendFrame() {
-
+    if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount === 0) {
         ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
         capture.toBlob((blob) => {
             ws.send(blob);
         }, 'image/jpeg');
-    }   
+    }
+}  
 }
 
 
