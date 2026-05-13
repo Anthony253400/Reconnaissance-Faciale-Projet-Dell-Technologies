@@ -28,8 +28,8 @@ model_path_blazeface='../model/blaze_face_short_range.tflite'
 model_yolov = cv2.dnn.readNetFromONNX("../model/yolov8n.onnx")
 
 #Carte graphique
-model_yolov.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-model_yolov.setPreferableTarget(cv2.dnn.DNN_BACKEND_CUDA)
+#model_yolov.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+#'model_yolov.setPreferableTarget(cv2.dnn.DNN_BACKEND_CUDA)
 
 base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
 options = vision.FaceDetectorOptions(base_options=base_options)
