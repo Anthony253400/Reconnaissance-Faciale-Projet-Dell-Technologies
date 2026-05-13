@@ -1,6 +1,6 @@
 import sys
 import io
-from time import time
+import time
 import cv2
 sys.path.append('../')  # add parent directory to path to import detecVisage
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket
@@ -28,8 +28,8 @@ model_path_blazeface='../model/blaze_face_short_range.tflite'
 model_yolov = cv2.dnn.readNetFromONNX("../model/yolov8n.onnx")
 
 #Carte graphique
-#model_yolov.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-#model_yolov.setPreferableTarget(cv2.dnn.DNN_BACKEND_CUDA)
+model_yolov.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+model_yolov.setPreferableTarget(cv2.dnn.DNN_BACKEND_CUDA)
 
 base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
 options = vision.FaceDetectorOptions(base_options=base_options)
@@ -98,11 +98,52 @@ async def detec_video(websocket: WebSocket):
         current_tracked_faces = []
         if result and result.detections:
             crops = align_crop(image, result)
+            """
             for face_cropped in crops:
                 embedding =  await loop.run_in_executor(None, get_embedding, face_cropped)
                 name, score = await loop.run_in_executor(None, search_embedding, embedding)
                 score_str = f"{score:.2f}" if score else "?"
                 names.append(f"{name} ({score_str})")
+            """ 
+            for i, face_cropped in enumerate(crops):
+                box = boxes_face[i]
+               
+                # --- LOGIQUE DE TRACKING ET CACHE ---
+                matched_face = None
+                
+                # On cherche si on connaît déjà ce visage (s'il était là à la frame précédente)
+                for t_face in tracked_faces:
+                    if distance_box(box, t_face["box"]) < distane_threshold:
+                        matched_face = t_face
+                        break
+                
+                # Si on l'a reconnu récemment (moins de X secondes)
+                if matched_face and (current_time - matched_face["last_pred_time"]) < recognition_interval:
+                    # On utilise le CACHE, on ne fait AUCUN calcul lourd !
+                    name = matched_face["name"]
+                    score = matched_face["score"]
+                    last_pred_time = matched_face["last_pred_time"]
+                
+                # Si c'est un nouveau visage OU que le délai X est dépassé
+                else:
+                    # On lance la PRÉDICTION lourde (Embedding + Qdrant)
+                    embedding = await loop.run_in_executor(None, get_embedding, face_cropped)
+                    name, score = await loop.run_in_executor(None, search_embedding, embedding)
+                    last_pred_time = current_time # On met à jour le chronomètre
+                
+                # On enregistre l'état actuel pour la prochaine frame
+                current_tracked_faces.append({
+                    "box": box,
+                    "name": name,
+                    "score": score,
+                    "last_pred_time": last_pred_time
+                })
+
+                score_str = f"{score:.2f}" if score else "?"
+                names.append(f"{name} ({score_str})")
+
+        # Mise à jour de la mémoire pour la frame suivante
+        tracked_faces = current_tracked_faces
 
         await websocket.send_json({"faces": boxes_face , "body":boxes_body ,  "names": names})
 
