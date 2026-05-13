@@ -15,10 +15,18 @@ def preprocessing(img):
     return img.astype(np.float32)
 
 
-def get_embedding(image):
+def get_embedding(image, model, use_gpu: bool = False):
     img = preprocessing(image)
-    input_name = session.get_inputs()[0].name
-    embedding = session.run(None, {input_name: img})[0]
-    embedding = embedding[0]                           # (1, 512) → (512,)
+    if use_gpu :
+        providers = [("CUDAExecutionProvider", {"device_id": 0}), "CPUExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
+
+    model.set_providers(providers)
+
+    img = preprocessing(image)
+    input_name = model.get_inputs()[0].name
+    embedding = model.run(None, {input_name: img})[0]
+    embedding = embedding[0]
     embedding = embedding / np.linalg.norm(embedding)
     return embedding

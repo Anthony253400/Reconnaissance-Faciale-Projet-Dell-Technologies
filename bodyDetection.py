@@ -42,7 +42,7 @@ def BodyDetect(url_img : str , detector ):
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     return boxes, final_confidences ,img_rgb
 
-def BodyDetect_from_bytes(image_bytes, detector):
+def BodyDetect_from_bytes(image_bytes, detector,use_gpu: bool = False):
     """
     Detects human bodies from raw image bytes using a YOLOv8 ONNX model.
 
@@ -56,6 +56,14 @@ def BodyDetect_from_bytes(image_bytes, detector):
             - final_confidences (list): Confidence scores for each detected body.
             - img_rgb (numpy.ndarray): The loaded image in RGB format.
     """
+    #gpu
+    if use_gpu and cv2.cuda.getCudaEnabledDeviceCount() > 0:
+        detector.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        detector.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    else:
+        detector.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+        detector.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # BGR
     h, w, _ = img.shape
