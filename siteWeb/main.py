@@ -15,6 +15,8 @@ from embeddings import get_embedding
 from qdrant_db import save_embedding, create_collection, search_embedding
 from DrawBox import  DrawBox , color_name_to_rgb
 from bodyDetection import BodyDetect_from_bytes
+from tracker import BodyTracker
+
 
 
 
@@ -72,21 +74,31 @@ async def add_person(
 @app.websocket("/ws/detect")
 async def detec_video(websocket: WebSocket):
     await websocket.accept()
+    tracker = BodyTracker()
     while True:
         data = await websocket.receive_bytes()
         boxes_face ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
         boxes_body, confidence, image = BodyDetect_from_bytes(data, model_path_yolov)
 
-        names = []
+        names = [""] * len(boxes_face)
+        clean_names = [""] * len(boxes_face)
         if result and result.detections:
             crops = align_crop(image, result)
-            for face_cropped in crops:
+            for i, face_cropped in enumerate(crops):
                 embedding = get_embedding(face_cropped)
                 name, score = search_embedding(embedding)
                 score_str = f"{score:.2f}" if score else "?"
-                names.append(f"{name} ({score_str})")
-
-        await websocket.send_json({"faces": boxes_face , "body":boxes_body ,  "names": names})
+                names[i] = f"{name} ({score_str})"
+                clean_names[i] = name
+        body_names = tracker.update(boxes_face, boxes_body, clean_names)
+        #print(f"body_names: {body_names}")
+        #print(f"clean_names: {clean_names}")
+        await websocket.send_json({
+            "faces": boxes_face , 
+            "body":boxes_body ,  
+            "names": names,
+            "body_names": body_names
+        })
 
 
 

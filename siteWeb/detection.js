@@ -41,8 +41,10 @@ async function startDetection() {
     // receive detection results from the server and draw bounding boxes
     ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
+    console.log(data);
     ctxOver.clearRect(0, 0, overlay.width, overlay.height);
 
+    //box and name for face detected
     for (let i = 0; i < data.faces.length; i++) {
         const [x1, y1, x2, y2] = data.faces[i];
         const drawX1 = MIRROR ? overlay.width - x2 : x1;
@@ -51,20 +53,26 @@ async function startDetection() {
         ctxOver.lineWidth = 2;
         ctxOver.strokeRect(drawX1, y1, drawX2 - drawX1, y2 - y1);
 
-            const name = data.names[i] || "";
-            ctxOver.fillStyle = "green";
-            ctxOver.font = "16px Arial";
-            ctxOver.fillText(name, drawX1, y1 - 5);
-        }
-         for (let i = 0; i < data.body.length; i++) {
+        const name = data.names[i] || "";
+        ctxOver.fillStyle = "green";
+        ctxOver.font = "16px Arial";
+        ctxOver.fillText(name, drawX1, y1 - 5);
+    }
+    //box and name for body detected
+    for (let i = 0; i < data.body.length; i++) {
         const [x1, y1, x2, y2] = data.body[i];
         const drawX1 = MIRROR ? overlay.width - x2 : x1;
         const drawX2 = MIRROR ? overlay.width - x1 : x2;
         ctxOver.strokeStyle = "red";
         ctxOver.lineWidth = 2;
         ctxOver.strokeRect(drawX1, y1, drawX2 - drawX1, y2 - y1);
+
+        const name = data.body_names[i] || "";
+        ctxOver.fillStyle = "red";
+        ctxOver.font = "16px Arial";
+        ctxOver.fillText(name, drawX1, y1 - 5);
     }
-        sendFrame();
+    sendFrame();
     };
 
     ws.onclose =() => console.log("WebSocket disconnected");
