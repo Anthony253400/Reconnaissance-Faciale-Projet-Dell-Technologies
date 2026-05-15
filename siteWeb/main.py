@@ -90,63 +90,20 @@ async def detec_video(websocket: WebSocket):
         current_time = time.time()
         #boxes_face ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
         #boxes_body, confidence, image = BodyDetect_from_bytes(data, model_yolov)
-        task_face = loop.run_in_executor(None, FacesDetects_from_bytes, data, "mediapipe", detector)
-        task_body = loop.run_in_executor(None, BodyDetect_from_bytes, data, model_yolov)
+        task_face = loop.run_in_executor(None, FacesDetects_from_bytes, data, "mediapipe", model_blazeface)
+        task_body = loop.run_in_executor(None, BodyDetect_from_bytes, data, model_yolo)
         (boxes_face, result, image), (boxes_body, confidence, _) = await asyncio.gather(task_face, task_body)
 
         names = []
-        current_tracked_faces = []
         if result and result.detections:
             crops = align_crop(image, result)
-            """
             for face_cropped in crops:
                 embedding =  await loop.run_in_executor(None, get_embedding, face_cropped)
                 name, score = await loop.run_in_executor(None, search_embedding, embedding)
                 score_str = f"{score:.2f}" if score else "?"
                 names.append(f"{name} ({score_str})")
-            """ 
-            for i, face_cropped in enumerate(crops):
-                box = boxes_face[i]
-               
-                # --- LOGIQUE DE TRACKING ET CACHE ---
-                matched_face = None
-                
-                # On cherche si on connaît déjà ce visage (s'il était là à la frame précédente)
-                for t_face in tracked_faces:
-                    if distance_box(box, t_face["box"]) < distane_threshold:
-                        matched_face = t_face
-                        break
-                
-                # Si on l'a reconnu récemment (moins de X secondes)
-                if matched_face and (current_time - matched_face["last_pred_time"]) < recognition_interval:
-                    # On utilise le CACHE, on ne fait AUCUN calcul lourd !
-                    name = matched_face["name"]
-                    score = matched_face["score"]
-                    last_pred_time = matched_face["last_pred_time"]
-                
-                # Si c'est un nouveau visage OU que le délai X est dépassé
-                else:
-                    # On lance la PRÉDICTION lourde (Embedding + Qdrant)
-                    embedding = await loop.run_in_executor(None, get_embedding, face_cropped)
-                    name, score = await loop.run_in_executor(None, search_embedding, embedding)
-                    last_pred_time = current_time # On met à jour le chronomètre
-                
-                # On enregistre l'état actuel pour la prochaine frame
-                current_tracked_faces.append({
-                    "box": box,
-                    "name": name,
-                    "score": score,
-                    "last_pred_time": last_pred_time
-                })
-
-                score_str = f"{score:.2f}" if score else "?"
-                names.append(f"{name} ({score_str})")
-
-        # Mise à jour de la mémoire pour la frame suivante
-        tracked_faces = current_tracked_faces
 
         await websocket.send_json({"faces": boxes_face , "body":boxes_body ,  "names": names})
-
 
 
 

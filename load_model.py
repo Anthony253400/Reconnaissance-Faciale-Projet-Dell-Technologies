@@ -70,7 +70,7 @@ def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use
 
 def load_model(name : str , use_gpu : bool):
     if name == "yolo":
-        _, model = load_yolo()
+        _, model = load_yolo(use_gpu = use_gpu)
         return model
     if name == "arcface":
         return load_arcface(use_gpu = use_gpu)

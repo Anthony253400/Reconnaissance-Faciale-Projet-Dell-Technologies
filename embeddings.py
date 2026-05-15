@@ -15,15 +15,7 @@ def preprocessing(img):
     return img.astype(np.float32)
 
 
-def get_embedding(image, model, use_gpu: bool = False):
-    img = preprocessing(image)
-    if use_gpu :
-        providers = [("CUDAExecutionProvider", {"device_id": 0}), "CPUExecutionProvider"]
-    else:
-        providers = ["CPUExecutionProvider"]
-
-    model.set_providers(providers)
-
+def get_embedding(image, model):
     img = preprocessing(image)
     input_name = model.get_inputs()[0].name
     embedding = model.run(None, {input_name: img})[0]
