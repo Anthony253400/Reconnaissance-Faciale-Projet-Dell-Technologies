@@ -70,7 +70,7 @@ def BodyDetect_from_bytes(image_bytes, detector):
 
     for row in predictions:
         score = row[4:].max()
-        if score > 0.7:
+        if score > 0.5:
             class_id = row[4:].argmax()
             if class_id == 0:
                 cx, cy, rw, rh = row[0:4]
@@ -82,7 +82,7 @@ def BodyDetect_from_bytes(image_bytes, detector):
                 box.append([x1, y1, width, height])
                 confidences.append(float(score))
 
-    indices = cv2.dnn.NMSBoxes(box, confidences, score_threshold=0.7, nms_threshold=0.4)
+    indices = cv2.dnn.NMSBoxes(box, confidences, score_threshold=0.5, nms_threshold=0.4)
 
     boxes = []
     final_confidences = []

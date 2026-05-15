@@ -15,6 +15,7 @@ from embeddings import get_embedding
 from qdrant_db import save_embedding, create_collection, search_embedding
 from DrawBox import  DrawBox , color_name_to_rgb
 from bodyDetection import BodyDetect_from_bytes
+from bodyAlignment import body_crop
 from tracker import BodyTracker
 
 
@@ -90,7 +91,8 @@ async def detec_video(websocket: WebSocket):
                 score_str = f"{score:.2f}" if score else "?"
                 names[i] = f"{name} ({score_str})"
                 clean_names[i] = name
-        body_names = tracker.update(boxes_face, boxes_body, clean_names)
+        crops_body = body_crop(image, boxes_body) if boxes_body else []
+        body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
         #print(f"body_names: {body_names}")
         #print(f"clean_names: {clean_names}")
         await websocket.send_json({
