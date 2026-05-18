@@ -25,9 +25,9 @@ from load_model import load_model
 app = FastAPI()
 
 
-model_yolo = load_model("yolo",False)
-model_blazeface = load_model("blazeface",False)
-model_arcface = load_model("arcface",False)
+model_yolo = load_model("yolo",True)
+model_blazeface = load_model("blazeface",True)
+model_arcface = load_model("arcface",True)
 
 
 #Carte graphique
