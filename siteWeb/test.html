@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Recognition — Server Stream</title>
+  <style>
+    body { margin: 0; background: #111; color: #eee; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { margin-bottom: 12px; font-size: 1.2rem; letter-spacing: 2px; color: #0f0; }
+    #feed { border: 2px solid #0f0; max-width: 640px; width: 100%; }
+    #status { margin-top: 8px; font-size: .85rem; color: #888; }
+    #names  { margin-top: 6px; font-size: .9rem; color: #0f0; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>🎥 LIVE RECOGNITION</h1>
+  <img id="feed" src="" alt="stream" />
+  <div id="status">Connexion…</div>
+  <div id="names"></div>
+
+  <script>
+    const img    = document.getElementById('feed');
+    const status = document.getElementById('status');
+    const names  = document.getElementById('names');
+
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/stream");
+    ws.binaryType = 'blob';
+
+    ws.onopen  = () => status.textContent = '🟢 Connecté';
+    ws.onclose = () => status.textContent = '🔴 Déconnecté';
+    ws.onerror = () => status.textContent = '❌ Erreur WebSocket';
+
+    ws.onmessage = (evt) => {
+      const data = JSON.parse(evt.data);
+      if (data.error) { status.textContent = '❌ ' + data.error; return; }
+
+      // Display the annotated frame
+      img.src = 'data:image/jpeg;base64,' + data.frame;
+
+      // Show detected names
+      const all = [...(data.names || []), ...(data.body_names || [])]
+        .filter(n => n && n.trim());
+      names.textContent = all.length ? '👤 ' + all.join('  |  ') : '';
+    };
+  </script>
+</body>
+</html>
