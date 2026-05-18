@@ -98,7 +98,7 @@ async def detec_video(websocket: WebSocket):
         if result and result.detections:
             crops = align_crop(image, result)
             for face_cropped in crops:
-                embedding =  await loop.run_in_executor(None, get_embedding, face_cropped)
+                embedding =  await loop.run_in_executor(None, get_embedding, face_cropped , model_arcface)
                 name, score = await loop.run_in_executor(None, search_embedding, embedding)
                 score_str = f"{score:.2f}" if score else "?"
                 names.append(f"{name} ({score_str})")

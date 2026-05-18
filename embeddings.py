@@ -4,8 +4,8 @@ import os
 import numpy as np
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-session = ort.InferenceSession(os.path.join(BASE_DIR, "model", "arc.onnx"))
+#BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#session = ort.InferenceSession(os.path.join(BASE_DIR, "model", "arc.onnx"))
 def preprocessing(img):
     rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     resized_img = cv2.resize(rgb_img, (112, 112))
