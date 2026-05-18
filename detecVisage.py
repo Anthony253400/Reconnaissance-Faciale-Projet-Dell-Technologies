@@ -60,7 +60,7 @@ def FacesDetects_mediapipe(url_img : str , model_path='model/blaze_face_short_ra
                 ])
         return box , detection_result , image
     
-def FacesDetects_from_bytes(image_bytes, method , detector):
+def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
     """
     Detects faces from bytes by choosing the method.
     Args:
@@ -74,9 +74,13 @@ def FacesDetects_from_bytes(image_bytes, method , detector):
             - result (list): The raw object returned by mtcnn or MediaPipe library. Containing the native detection data, bounding boxes, and scores.
             - image (numpy.ndarray): The loaded image data in RGB format.
     
-    """
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    """ 
+    if numpy == False : 
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    else:
+        image_bgr = image_bytes
+    
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     
     box = []
