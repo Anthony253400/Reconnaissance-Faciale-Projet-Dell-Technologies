@@ -41,4 +41,5 @@ def search_embedding(embedding, threshold=0.5):
         #print(f"Score : {results[0].score}")  
         if results[0].score >= threshold:
             return results[0].payload["name"], results[0].score
-    return "Inconnu", None
+    return "unknown", None
+
