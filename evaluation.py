@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+
  
 from detecVisage import FacesDetects_from_bytes
 from faceAlignment import align_crop
@@ -102,7 +103,7 @@ def false_reject_rate(t):
     """FRR = fraction of genuine attempts incorrectly rejected at threshold t"""
     wrong= 0
     for r in genuine_results:
-        if r["score"] < t or r["predicted_name"] != r["label_true"]:
+        if r["score"] < t: 
             wrong += 1
     frr = wrong / len(genuine_results) 
     return frr
