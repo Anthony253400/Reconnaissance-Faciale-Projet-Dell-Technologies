@@ -31,7 +31,7 @@ cap.release()
 
 # MODELE
 model_mediapipe = load_model("blazeface",  False)
-model_arcface = load_model("arcface",  False)
+model_arcface = load_model("arcface",  True)
 model_yolo = load_model("yolo",  False)
 
 
@@ -137,7 +137,7 @@ class CameraStream:
         self.cap.release()
 
 
-camera = CameraStream(src=0)   # 0 = webcam par défaut
+camera = CameraStream(src=0)
 
 
 # ── Générateur MJPEG ──────────────────────────────────────────────────────────

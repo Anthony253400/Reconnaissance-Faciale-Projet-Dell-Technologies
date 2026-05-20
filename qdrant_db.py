@@ -2,9 +2,9 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance, PointIdsList
 import uuid
 
-client = QdrantClient(host="10.233.220.118", port=6333)
+#client = QdrantClient(host="10.233.220.118", port=6333)
 
-#client = QdrantClient(host="localhost", port=6333)
+client = QdrantClient(host="localhost", port=6333)
 
 COLLECTION = "face"
 

@@ -1,4 +1,4 @@
-docker start qdrant_facial_project
+docker start qdrant_facial_recognition
 
 cd siteWeb
 uvicorn main:app --reload
