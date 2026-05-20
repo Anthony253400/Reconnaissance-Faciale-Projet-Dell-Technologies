@@ -42,99 +42,69 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Capture caméra partagée ───────────────────────────────────────────────────
 class CameraStream:
-    """
-    Thread dédié à la lecture de la webcam.
-    Stocke la dernière frame traitée (JPEG bytes) accessible par tous les clients.
-    """
     def __init__(self, src=0):
         self.cap = cv2.VideoCapture(src)
-        self.lock = threading.Lock()
-        self.latest_frame: bytes | None = None
+        self.lock_raw = threading.Lock()
+        self.lock_out = threading.Lock()
+        
+        self.raw_frame = None        # frame brute (mise à jour à 30fps)
+        self.latest_frame = None     # frame annotée (mise à jour à ~2fps)
         self.running = True
-        self._thread = threading.Thread(target=self._loop, daemon=True)
-        self._thread.start()
 
-    def _loop(self):
+        # Thread 1 : capture pure, ultra rapide
+        self._t_capture = threading.Thread(target=self._capture_loop, daemon=True)
+        # Thread 2 : pipeline IA, lent mais indépendant
+        self._t_ai = threading.Thread(target=self._ai_loop, daemon=True)
+
+        self._t_capture.start()
+        self._t_ai.start()
+
+    def _capture_loop(self):
+        """Lit la caméra aussi vite que possible — aucune IA ici"""
         while self.running:
-            t_start_total = time.perf_counter()
-
-            # --- 1. Capture Caméra ---
-            t0 = time.perf_counter()
             ok, frame = self.cap.read()
-            t_capture = (time.perf_counter() - t0) * 1000
-            
             if not ok:
+                continue
+            with self.lock_raw:
+                self.raw_frame = frame   # toujours la frame la plus récente
+
+    def _ai_loop(self):
+        """Pipeline IA — prend la dernière frame dispo et la traite"""
+        while self.running:
+            # Récupère la dernière frame brute
+            with self.lock_raw:
+                frame = self.raw_frame
+            if frame is None:
                 continue
 
             try:
-                # --- 2. Formatage initial (encodage jpg) ---
-                t0 = time.perf_counter()
                 _, img_bytes = cv2.imencode('.jpg', frame)
-                t_encodage_init = (time.perf_counter() - t0) * 1000
-
-                # --- 3. Détection de visages ---
-                t0 = time.perf_counter()
                 boxes_face, result, image_rgb = FacesDetects_from_bytes(
                     img_bytes.tobytes(), "mediapipe", model_mediapipe
                 )
-                t_detection = (time.perf_counter() - t0) * 1000
 
-                # ── Reconnaissance ────────────────────────────────────────
                 labels = []
-                t_alignement = 0
-                t_embedding = 0
-                t_recherche = 0
-
                 if result and result.detections:
-                    # --- 4. Alignement / Redressement ---
-                    t0 = time.perf_counter()
                     crops = align_crop(image_rgb, result)
-                    t_alignement = (time.perf_counter() - t0) * 1000
-
                     for face_cropped in crops:
-                        # --- 5. Embedding (Extraction de caractéristiques) ---
-                        t1 = time.perf_counter()
                         embedding = get_embedding(face_cropped, model_arcface)
-                        t_embedding += (time.perf_counter() - t1) * 1000
-
-                        # --- 6. Recherche en base de données ---
-                        t2 = time.perf_counter()
                         name, score = search_embedding(embedding)
-                        t_recherche += (time.perf_counter() - t2) * 1000
-                        
                         labels.append(f"{name} ({score:.2f})" if name else "inconnu")
-                # ─────────────────────────────────────────────────────────
 
-                # --- 7. Dessin des boxes et formatage final ---
-                t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
                 bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
                 _, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 80])
-                t_formatage_final = (time.perf_counter() - t0) * 1000
 
-                with self.lock:
+                with self.lock_out:
                     self.latest_frame = buf.tobytes()
-
-                t_total = (time.perf_counter() - t_start_total) * 1000
-
-                # ── AFFICHAGE DES TEMPS DANS LA CONSOLE ──
-                print(f"[LOOP] Total: {t_total:.1f}ms | Cap: {t_capture:.1f}ms | Enc1: {t_encodage_init:.1f}ms | Det: {t_detection:.1f}ms | Ali: {t_alignement:.1f}ms | Emb: {t_embedding:.1f}ms | Rech: {t_recherche:.1f}ms | Dessin/Enc2: {t_formatage_final:.1f}ms")
 
             except Exception as e:
-                print(f"Erreur dans _loop : {e}")
-                _, buf = cv2.imencode('.jpg', frame)
-                with self.lock:
-                    self.latest_frame = buf.tobytes()
+                print(f"Erreur _ai_loop : {e}")
 
     def get_frame(self) -> bytes | None:
-        with self.lock:
+        with self.lock_out:
             return self.latest_frame
-
-    def release(self):
-        self.running = False
-        self.cap.release()
 
 
 camera = CameraStream(src=0)
