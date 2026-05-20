@@ -3,7 +3,7 @@ import io
 import threading
 import sys
 import time  # <-- Ajout du module time
-sys.path.append('../')  # add parent directory to path to import detecVisage
+sys.path.append('../')
 
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,12 +22,6 @@ from DrawBox import DrawBox
 
 
 app = FastAPI()
-
-cap = cv2.VideoCapture(0)
-print("Ouvert :", cap.isOpened())
-ok, frame = cap.read()
-print("Frame lue :", ok, frame.shape if ok else "ÉCHEC")
-cap.release()
 
 # MODELE
 model_mediapipe = load_model("blazeface",  False)
@@ -84,48 +78,47 @@ class CameraStream:
                 continue
 
             try:
-                # --- 2. Formatage initial ---
+                # encode
                 t0 = time.perf_counter()
-                _, img_bytes = cv2.imencode('.jpg', frame)
                 t_encodage_init = (time.perf_counter() - t0) * 1000
 
-                # --- 3. Détection ---
+                # detect face
                 t0 = time.perf_counter()
                 boxes_face, result, image_rgb = FacesDetects_from_bytes(
-                    img_bytes.tobytes(), "mediapipe", model_mediapipe
+                    frame, "mediapipe", model_mediapipe , numpy= True
                 )
                 t_detection = (time.perf_counter() - t0) * 1000
 
-                # --- Reconnaissance ---
+            
                 labels = []
                 t_alignement = 0
                 t_embedding = 0
                 t_recherche = 0
 
                 if result and result.detections:
-                    # --- 4. Alignement ---
+                    # Alignment
                     t0 = time.perf_counter()
                     crops = align_crop(image_rgb, result)
                     t_alignement = (time.perf_counter() - t0) * 1000
 
                     for face_cropped in crops:
-                        # --- 5. Embedding ---
+                        # Embedding
                         t1 = time.perf_counter()
                         embedding = get_embedding(face_cropped, model_arcface)
                         t_embedding += (time.perf_counter() - t1) * 1000
 
-                        # --- 6. Recherche BDD ---
+                        # Recherche BDD
                         t2 = time.perf_counter()
                         name, score = search_embedding(embedding)
                         t_recherche += (time.perf_counter() - t2) * 1000
 
                         labels.append(f"{name} ({score:.2f})" if name else "inconnu")
 
-                # --- 7. Dessin & encodage final ---
+                #  Dessin  encodage final
                 t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
                 bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-                _, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                _, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 100])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
 
                 with self.lock_out:
@@ -150,23 +143,7 @@ class CameraStream:
 
 camera = CameraStream(src=0)
 
-
-# ── Générateur MJPEG ──────────────────────────────────────────────────────────
-def mjpeg_generator():
-    """Génère un flux MJPEG consommable par un <img> HTML."""
-    boundary = b"--frame"
-    while True:
-        frame = camera.get_frame()
-        if frame is None:
-            continue
-        yield (
-            boundary + b"\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" +
-            frame + b"\r\n"
-        )
-
-
-# ── ROUTE /frame ──────────────────────────────────────────────────────────────
+#frame
 @app.get("/frame")
 def get_frame():
     frame = camera.get_frame()
@@ -175,7 +152,7 @@ def get_frame():
     return Response(content=frame, media_type="image/jpeg")
 
 
-# ── ROUTE /add ────────────────────────────────────────────────────────────────
+#ADD people ad bd
 @app.post("/add")
 async def add_person(
     firstName: str = Form(...),
