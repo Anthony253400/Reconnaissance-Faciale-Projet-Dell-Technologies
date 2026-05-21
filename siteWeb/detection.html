@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Face Recognition — Detect</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* riquadro originale — invariato */
         .detection-wrapper {
             position: relative;
             width: 640px;
             height: 480px;
+            margin: 0 auto;
         }
         .detection-wrapper video,
         .detection-wrapper canvas {
@@ -20,6 +21,18 @@
     </style>
 </head>
 <body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <span class="nav-brand">Face Recognition</span>
+        <div class="nav-links">
+            <a href="home.html" class="nav-link">Home</a>
+            <a href="index.html" class="nav-link">Register</a>
+            <a href="detection.html" class="nav-link active">Detect</a>
+        </div>
+    </div>
+</nav>
+
 <div class="container">
 
     <header class="page-header">
@@ -28,7 +41,7 @@
     </header>
 
     <div class="section-card">
-        <h2>Detect Faces</h2>
+        <h2>Live camera</h2>
 
         <div class="detection-wrapper">
             <video id="webcam" autoplay playsinline width="640" height="480"></video>
@@ -37,13 +50,14 @@
 
         <canvas id="capture" width="640" height="480" style="display:none;"></canvas>
 
-        <div class="btn-row">
-            <a href="index.html" class="btn btn-secondary">Back to Add Person</a>
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot green"></span>Face recognized</span>
+            <span class="legend-item"><span class="legend-dot red"></span>Body detected</span>
         </div>
     </div>
 
     <div class="footer">
-        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>   
+        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>
     </div>
 
 </div>

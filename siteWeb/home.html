@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition — Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <span class="nav-brand">Face Recognition</span>
+        <div class="nav-links">
+            <a href="home.html" class="nav-link active">Home</a>
+            <a href="index.html" class="nav-link">Register</a>
+            <a href="detection.html" class="nav-link">Detect</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="hero">
+        <div class="hero-badge">Dell Technologies Montpellier</div>
+        <h1 class="hero-title">Real time face recognition</h1>
+        <p class="hero-sub">A web application developed during a curricular internship. Detect and identify people in real time using AI-powered face and body recognition.</p>
+        <div class="btn-row centered">
+            <a href="index.html" class="btn btn-primary">Register a person</a>
+            <a href="detection.html" class="btn btn-secondary">Start detection</a>
+        </div>
+    </div>
+
+    <div class="home-divider"></div>
+
+    <div class="home-section">
+        <p class="section-label">About the project</p>
+        <p class="home-text">This application was built as part of a curricular internship at Dell Technologies Montpellier. The goal is to explore real time face recognition.</p>
+        <p class="home-text">The system detects faces and bodies through a webcam feed, matches them against a database of known individuals, and can identify people even when their face is not visible using body shape, height and appearance as signals.</p>
+    </div>
+
+    <div class="home-section">
+        <p class="section-label">How does it work?</p>
+        <div class="hiw-list">
+            <div class="hiw-item">
+                <div class="hiw-icon">01</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Face detection</h3>
+                    <p class="hiw-desc">Detects faces in real time using MediaPipe BlazeFace and generates a unique 512-dimensional embedding with ArcFace for each person.</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">02</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Body re-identification</h3>
+                    <p class="hiw-desc">Recognises people from behind or at a distance using body shape and appearance, even without a visible face, through a YOLOv8 detection pipeline.</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">03</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Vector database</h3>
+                    <p class="hiw-desc">Embeddings are stored in Qdrant and matched using cosine similarity for fast and accurate recognition in real time.</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">04</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">GDPR compliant</h3>
+                    <p class="hiw-desc">No photos are stored only biometric vectors. Explicit consent is required before any data is saved to the database.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-divider"></div>
+
+    <div class="cta-grid">
+        <div class="cta-card cta-main">
+            <p class="cta-label">Step 1</p>
+            <h3 class="cta-title">Register a person</h3>
+            <p class="cta-desc">Add someone to the database by taking 5 photos with the webcam or uploading images from your computer.</p>
+            <a href="index.html" class="btn btn-primary">Go to Register</a>
+        </div>
+        <div class="cta-card">
+            <p class="cta-label">Step 2</p>
+            <h3 class="cta-title">Start detection</h3>
+            <p class="cta-desc">Open the live webcam feed to identify people already registered in the database in real time.</p>
+            <a href="detection.html" class="btn btn-secondary">Go to Detect</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>
+    </div>
+
+</div>
+</body>
+</html>
