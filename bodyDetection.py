@@ -41,33 +41,32 @@ def BodyDetect(url_img : str , detector ):
         final_confidences.append(confidences[i])
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     return boxes, final_confidences ,img_rgb
+import cv2
+import numpy as np
+import time  # Ne pas oublier cet import
 
-def BodyDetect_from_bytes(image_bytes, detector):
-    """
-    Detects human bodies from raw image bytes using a YOLOv8 ONNX model.
+def BodyDetect_from_frame(img, detector):
+    # Démarrage du chronomètre global
+    t_start = time.perf_counter()
 
-    Args:
-        image_bytes: Raw image data (bytes received from API).
-        detector: Pre-initialized cv2.dnn network (YOLOv8 ONNX).
-
-    Returns:
-        tuple:
-            - boxes (list): A list of lists in the format [x1, y1, x2, y2].
-            - final_confidences (list): Confidence scores for each detected body.
-            - img_rgb (numpy.ndarray): The loaded image in RGB format.
-    """
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # BGR
+    # 1. Préparation de l'image (Blob)
     h, w, _ = img.shape
-
     blob = cv2.dnn.blobFromImage(img, 1/255.0, (640, 640), swapRB=True, crop=False)
     detector.setInput(blob)
+    
+    t_blob = time.perf_counter()
+    print(f"[Timer] 1. Préparation du blob : {(t_blob - t_start) * 1000:.2f} ms")
+
+    # 2. L'inférence (Le réseau de neurones)
     outputs = detector.forward()
     predictions = np.squeeze(outputs[0]).T
+    
+    t_infer = time.perf_counter()
+    print(f"[Timer] 2. Inférence YOLO (forward) : {(t_infer - t_blob) * 1000:.2f} ms")
 
+    # 3. Le tri des propositions
     box = []
     confidences = []
-
     for row in predictions:
         score = row[4:].max()
         if score > 0.5:
@@ -78,21 +77,37 @@ def BodyDetect_from_bytes(image_bytes, detector):
                 y1 = int((cy - rh/2) * (h / 640))
                 width = int(rw * (w / 640))
                 height = int(rh * (h / 640))
-
                 box.append([x1, y1, width, height])
                 confidences.append(float(score))
+                
+    t_loop = time.perf_counter()
+    print(f"[Timer] 3. Tri et filtrage : {(t_loop - t_infer) * 1000:.2f} ms")
 
+    # 4. Le nettoyage (NMS)
     indices = cv2.dnn.NMSBoxes(box, confidences, score_threshold=0.5, nms_threshold=0.4)
+    
+    t_nms = time.perf_counter()
+    print(f"[Timer] 4. Nettoyage NMS : {(t_nms - t_loop) * 1000:.2f} ms")
 
+    # 5. Formatage final et conversion de couleur
     boxes = []
     final_confidences = []
-    for i in indices:
-        x, y, bw, bh = box[i]
-        boxes.append([x, y, x + bw, y + bh])
-        final_confidences.append(confidences[i])
+    if len(indices) > 0:
+        for i in indices.flatten():
+            x, y, bw, bh = box[i]
+            boxes.append([x, y, x + bw, y + bh])
+            final_confidences.append(confidences[i])
+    
+    t_end = time.perf_counter()
+    print(f"[Timer] 5. Formatage et conv. RGB : {(t_end - t_nms) * 1000:.2f} ms")
+    
+    # Temps total
+    print(f"[Timer] ---> TEMPS TOTAL DE LA FONCTION : {(t_end - t_start) * 1000:.2f} ms")
+    print("-" * 50) # Ligne de séparation pour y voir clair dans la console
 
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return boxes, final_confidences, img_rgb
+    return boxes, final_confidences
+
+
 
 
 

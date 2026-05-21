@@ -19,6 +19,8 @@ from faceAlignment import align_crop
 from embeddings import get_embedding
 from qdrant_db import save_embedding, create_collection, search_embedding
 from DrawBox import DrawBox
+from bodyDetection import BodyDetect_from_frame
+
 
 
 app = FastAPI()
@@ -26,7 +28,7 @@ app = FastAPI()
 # MODELE
 model_mediapipe = load_model("blazeface",  False)
 model_arcface = load_model("arcface",  True)
-model_yolo = load_model("yolo",  False)
+model_yolo = load_model("yolo",  False , processeur_intel = True)
 
 
 app.add_middleware(
@@ -65,7 +67,7 @@ class CameraStream:
             with self.lock_raw:
                 self.raw_frame = frame
 
-            print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
+            #print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
 
     def _ai_loop(self):
         """Pipeline IA — prend la dernière frame dispo et la traite"""
@@ -78,16 +80,18 @@ class CameraStream:
                 continue
 
             try:
-                # encode
-                t0 = time.perf_counter()
-                t_encodage_init = (time.perf_counter() - t0) * 1000
+
 
                 # detect face
                 t0 = time.perf_counter()
                 boxes_face, result, image_rgb = FacesDetects_from_bytes(
-                    frame, "mediapipe", model_mediapipe , numpy= True
-                )
-                t_detection = (time.perf_counter() - t0) * 1000
+                    frame, "mediapipe", model_mediapipe , numpy= True)
+                t_detection_face = (time.perf_counter() - t0) * 1000
+
+
+                t0 = time.perf_counter()
+                #boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
+                t_detection_body = (time.perf_counter() - t0) * 1000
 
             
                 labels = []
@@ -125,7 +129,7 @@ class CameraStream:
                     self.latest_frame = buf.tobytes()
 
                 t_total = (time.perf_counter() - t_start_total) * 1000
-                print(f"[AI]      Total: {t_total:.1f}ms | Enc1: {t_encodage_init:.1f}ms | Det: {t_detection:.1f}ms | Ali: {t_alignement:.1f}ms | Emb: {t_embedding:.1f}ms | Rech: {t_recherche:.1f}ms | Dessin/Enc2: {t_formatage_final:.1f}ms")
+                print(f"[AI]      Total: {t_total:.1f}ms |Det Body: {t_detection_body:.1f}ms | Det Face: {t_detection_face:.1f}ms | Ali: {t_alignement:.1f}ms | Emb: {t_embedding:.1f}ms | Rech: {t_recherche:.1f}ms | Dessin/Enc2: {t_formatage_final:.1f}ms")
 
             except Exception as e:
                 print(f"Erreur _ai_loop : {e}")

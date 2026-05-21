@@ -4,7 +4,7 @@ CUDA_AVAILABLE = "CUDAExecutionProvider" in ort.get_available_providers()
 
 
 
-def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVAILABLE):
+def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVAILABLE ):
     """
     Charge ArcFace (ONNX).
     use_gpu=True  → CUDAExecutionProvider
@@ -31,7 +31,7 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
         return session
 
 
-def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = CUDA_AVAILABLE):
+def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = CUDA_AVAILABLE , processeur_intel :bool = False):
     """
     Charge YOLOv8.
     use_gpu=True  → Ultralytics + CUDA
@@ -49,6 +49,11 @@ def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = CUDA_AV
             print(f"[ModelLoader] YOLOv8 GPU échoué ({e}), fallback CPU")
 
     model = cv2.dnn.readNetFromONNX(model_path.replace('.pt', '.onnx'))
+    '''
+    if processeur_intel:
+        model.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
+        model.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+    '''
     print("[ModelLoader] YOLOv8 chargé sur CPU ✅")
     return ('opencv', model)
 
@@ -68,9 +73,9 @@ def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use
     print("[ModelLoader] BlazeFace chargé sur CPU ✅")
     return detector
 
-def load_model(name : str , use_gpu : bool):
+def load_model(name : str , use_gpu : bool , processeur_intel :bool = False):
     if name == "yolo":
-        _, model = load_yolo(use_gpu = use_gpu)
+        _, model = load_yolo(use_gpu = use_gpu, processeur_intel = processeur_intel)
         return model
     if name == "arcface":
         return load_arcface(use_gpu = use_gpu)
