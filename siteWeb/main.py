@@ -28,7 +28,7 @@ app = FastAPI()
 # MODELE
 model_mediapipe = load_model("blazeface",  False)
 model_arcface = load_model("arcface",  True)
-model_yolo = load_model("yolo",  False , processeur_intel = True)
+model_yolo = load_model("yolo",  True , processeur_intel = False)
 
 
 app.add_middleware(
@@ -67,7 +67,7 @@ class CameraStream:
             with self.lock_raw:
                 self.raw_frame = frame
 
-            #print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
+            print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
 
     def _ai_loop(self):
         """Pipeline IA — prend la dernière frame dispo et la traite"""
@@ -90,7 +90,7 @@ class CameraStream:
 
 
                 t0 = time.perf_counter()
-                #boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
+                boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
             

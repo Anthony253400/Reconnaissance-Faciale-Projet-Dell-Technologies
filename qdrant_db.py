@@ -4,7 +4,12 @@ import uuid
 
 #client = QdrantClient(host="10.233.220.118", port=6333)
 
-client = QdrantClient(host="localhost", port=6333)
+
+client = QdrantClient(
+    host="localhost", 
+    grpc_port=6334, 
+    prefer_grpc=True
+)
 
 COLLECTION = "face"
 

@@ -30,32 +30,53 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
         print("[ModelLoader] ArcFace chargé sur CPU ✅")
         return session
 
-
-def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = CUDA_AVAILABLE , processeur_intel :bool = False):
+def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = True, processeur_intel: bool = False):
     """
-    Charge YOLOv8.
-    use_gpu=True  → Ultralytics + CUDA
-    use_gpu=False → OpenCV DNN CPU
-    Retourne un tuple ('ultralytics'|'opencv', model)
+    Charge YOLOv8 au format ONNX.
+    Retourne un tuple ('onnx'|'opencv', model_instance)
     """
     if use_gpu:
         try:
-            from ultralytics import YOLO
-            model = YOLO(model_path)
-            model.to('cuda')
-            print("[ModelLoader] YOLOv8 chargé sur GPU ✅")
-            return ('ultralytics', model)
+            providers = [
+                ('CUDAExecutionProvider', {
+                    'device_id': 0,
+                    'arena_extend_strategy': 'kNextPowerOfTwo',
+                    'cudnn_conv_algo_search': 'EXHAUSTIVE',
+                    'do_copy_in_default_stream': True,
+                }),
+                'CPUExecutionProvider'
+            ]
+            
+            # Utilisation de model_path et non du chemin en dur
+            session = ort.InferenceSession(model_path, providers=providers)
+            
+            # Vérification vitale : ONNX a-t-il vraiment pris le GPU ?
+            if session.get_providers()[0] != 'CUDAExecutionProvider':
+                print("[ModelLoader] ⚠️ CUDA ignoré, ONNX a basculé silencieusement sur CPU.")
+            else:
+                print("[ModelLoader] YOLOv8 chargé sur GPU (ONNX) ✅")
+                
+            # On retourne 'onnx' au lieu de 'ultralytics' car c'est une session ort
+            return ('onnx', session)
+            
         except Exception as e:
-            print(f"[ModelLoader] YOLOv8 GPU échoué ({e}), fallback CPU")
+            print(f"[ModelLoader] YOLOv8 GPU échoué ({e}), fallback vers CPU OpenCV")
 
-    model = cv2.dnn.readNetFromONNX(model_path.replace('.pt', '.onnx'))
-    '''
+    # --- Bloc CPU (OpenCV) ---
+    print("[ModelLoader] Initialisation de YOLOv8 via OpenCV...")
+    net = cv2.dnn.readNetFromONNX(model_path)
+    
     if processeur_intel:
-        model.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
-        model.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
-    '''
-    print("[ModelLoader] YOLOv8 chargé sur CPU ✅")
-    return ('opencv', model)
+        # Optimisation spécifique pour processeurs Intel (nécessite OpenVINO compilé avec OpenCV)
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_INFERENCE_ENGINE)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+    else:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+        
+    print("[ModelLoader] YOLOv8 chargé sur CPU (OpenCV) ✅")
+    return ('opencv', net)
+
 
 
 def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use_gpu: bool = CUDA_AVAILABLE):
