@@ -6,7 +6,7 @@ async function init() {
     startDetection();
 }
 
-// -- WEBCAM --
+// WEBCAM
 // starts the webcam and connects the stream to the <video> tag
 async function startWebcam() {
     try {
@@ -22,7 +22,7 @@ async function startWebcam() {
 }
 
 
-// -- FACE DETECTION --
+// FACE DETECTION
 
 async function startDetection() {
     const video = document.getElementById('webcam');
@@ -49,14 +49,19 @@ async function startDetection() {
         const [x1, y1, x2, y2] = data.faces[i];
         const drawX1 = MIRROR ? overlay.width - x2 : x1;
         const drawX2 = MIRROR ? overlay.width - x1 : x2;
-        ctxOver.strokeStyle = "green";
+
+        const name = data.names[i] || "";
+        const score = data.scores[i];
+        const color = score >= 0.70 ? "green" : score >= 0.50 ? "yellow" : "gray";
+        
+        ctxOver.strokeStyle = color;
         ctxOver.lineWidth = 2;
         ctxOver.strokeRect(drawX1, y1, drawX2 - drawX1, y2 - y1);
 
-        const name = data.names[i] || "";
-        ctxOver.fillStyle = "green";
+        ctxOver.fillStyle = color;
         ctxOver.font = "16px Arial";
         ctxOver.fillText(name, drawX1, y1 - 5);
+
     }
     //box and name for body detected
     for (let i = 0; i < data.body.length; i++) {

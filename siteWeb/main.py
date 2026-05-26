@@ -85,6 +85,8 @@ async def detec_video(websocket: WebSocket):
 
         names = [""] * len(boxes_face)
         clean_names = [""] * len(boxes_face)
+        scores = [0.0] * len(boxes_face)        
+
         if result and result.detections:
             crops = align_crop(image, result)
             
@@ -94,6 +96,7 @@ async def detec_video(websocket: WebSocket):
                 score_str = f"{score:.2f}" if score else "?"
                 names[i] = f"{name} ({score_str})"
                 clean_names[i] = name
+                scores[i] = score
         crops_body = body_crop(image, boxes_body) if boxes_body else []
         body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
         #print(f"body_names: {body_names}")
@@ -102,7 +105,8 @@ async def detec_video(websocket: WebSocket):
             "faces": boxes_face , 
             "body":boxes_body ,  
             "names": names,
-            "body_names": body_names
+            "body_names": body_names,
+            "scores": scores
         })
 
 

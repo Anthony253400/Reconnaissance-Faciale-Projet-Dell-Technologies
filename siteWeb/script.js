@@ -5,13 +5,14 @@ const instructions = [
     "Look up",
     "Look down"
 ];
-
-let currentStep = 0;
-let capturedPhotos = [null, null, null, null, null];
+let capturedPhotos = [];
+let recording = false;
+let recordingInterval = null;
 const MIRROR = true; // set to true if your webcam feed is mirrored (front camera)
+const TARGET_FRAMES = 50; // number of frames to capture 
+const INTERVAL_MS = 150; // interval between captures in milliseconds 
 
-
-// ── WEBCAM ──
+// WEBCAM
 // starts the webcam and connects the stream to the <video> tag
 async function startWebcam() {
     try {
@@ -32,57 +33,40 @@ async function startWebcam() {
 startWebcam();
 
 
-// ── TAKE PICTURE ──
+// TAKE FRAME PICTURE
 // captures the current video frame and saves it as a file
 
-function takePicture() {
-    // trova il primo slot vuoto
-    const slotIndex = capturedPhotos.findIndex(p => p === null);
-    if (slotIndex === -1) return;  // tutti e 5 pieni
+function startRecording() {
+    if (recording) return;
+    capturedPhotos = [];
+    recording = true;
+    document.getElementById('btn-record').disabled = true;
+    document.getElementById('progress').textContent = `Capturing... 0 / ${TARGET_FRAMES}`;
 
     const video  = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
     const ctx    = canvas.getContext('2d');
 
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-        const file = new File([blob], `photo_${slotIndex}.jpg`, { type: "image/jpeg" });
-        capturedPhotos[slotIndex] = file;
-
-        const preview = document.getElementById(`preview-${slotIndex}`);
-        preview.src = URL.createObjectURL(blob);
-        preview.style.display = 'block';
-
-        document.getElementById(`delete-${slotIndex}`).style.display = 'block';
-
-        const filled = capturedPhotos.filter(p => p !== null).length;
-        if (filled < 5) {
-            const nextEmpty = capturedPhotos.findIndex(p => p === null);
-            document.getElementById('instruction').textContent = instructions[nextEmpty];
-            document.getElementById('step').textContent = `Photo ${filled + 1} / 5`;
-        } else {
-            document.getElementById('instruction').textContent = "All photos taken!";
-            document.getElementById('step').textContent = "You can now add to database";
-        }
-    }, 'image/jpeg');
+    recordingInterval = setInterval(() => {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+            capturedPhotos.push(new File([blob], `frame_${capturedPhotos.length}.jpg`, { type: "image/jpeg" }));
+            document.getElementById('progress').textContent = `Capturing... ${capturedPhotos.length} / ${TARGET_FRAMES}`;
+            if (capturedPhotos.length >= TARGET_FRAMES) {
+                clearInterval(recordingInterval);
+                recording = false;
+                document.getElementById('btn-record').disabled = false;
+                document.getElementById('progress').textContent = `Done! You can now add to database!`;
+            }
+        }, 'image/jpeg');
+    }, INTERVAL_MS);
 }
 
-function deletePhoto(index) {
-    capturedPhotos[index] = null;
-
-    document.getElementById(`preview-${index}`).style.display = 'none';
-    document.getElementById(`delete-${index}`).style.display = 'none';
-
-    const filled = capturedPhotos.filter(p => p !== null).length;
-    const nextEmpty = capturedPhotos.findIndex(p => p === null);
-    document.getElementById('instruction').textContent = instructions[nextEmpty];
-    document.getElementById('step').textContent = `Photo ${filled + 1} / 5`;
-}
 
 async function addPerson() {
+
     if (!document.getElementById('consent').checked) {
         alert("You must accept the privacy policy.");
         return;
@@ -100,8 +84,8 @@ async function addPerson() {
         alert("Names can only contain letters.");
         return;
     }
-    if (capturedPhotos.length < 5) {
-        alert("Please take all 5 photos first.");
+    if (capturedPhotos.length < TARGET_FRAMES) {
+        alert(`Please take all ${TARGET_FRAMES} photos first.`);
         return;
     }
 
@@ -111,27 +95,23 @@ async function addPerson() {
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);
             formData.append('photo', capturedPhotos[i]);
-
-            await fetch('http://localhost:8000/add', {
-                method: 'POST',
-                body: formData
-            });
+            await fetch('http://localhost:8000/add', { method: 'POST', body: formData });
+            document.getElementById('message').textContent = `Sending... ${i + 1} / ${TARGET_FRAMES}`;
         }
 
         document.getElementById('message').textContent = "Person added successfully!";
-
-        // reset
-        currentStep = 0;
         capturedPhotos = [];
-        document.getElementById('instruction').textContent = instructions[0];
-        document.getElementById('step').textContent = "Photo 1 / 5";
-        for (let i = 0; i < 5; i++) {
-            const preview = document.getElementById(`preview-${i}`);
-            preview.src = '';
-            preview.style.display = 'none';
-        }
+        document.getElementById('progress').textContent = '';
+        document.getElementById('btn-record').disabled = false;
+
+        document.getElementById('firstName').value = '';
+        document.getElementById('lastName').value  = '';
+        document.getElementById('consent').checked = false;
+
 
     } catch (error) {
+        console.error("Errore:", error);
         document.getElementById('message').textContent = "Error: server not available";
     }
 }
+

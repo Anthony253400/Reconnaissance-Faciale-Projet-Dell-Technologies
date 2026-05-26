@@ -24,7 +24,7 @@
     <div class="hero">
         <div class="hero-badge">Dell Technologies Montpellier</div>
         <h1 class="hero-title">Real time face recognition</h1>
-        <p class="hero-sub">A web application developed during a curricular internship. Detect and identify people in real time using AI-powered face and body recognition.</p>
+        <p class="hero-sub">Register a person once, then let the camera recognise them automatically — even from behind or at a distance.</p>
         <div class="btn-row centered">
             <a href="index.html" class="btn btn-primary">Register a person</a>
             <a href="detection.html" class="btn btn-secondary">Start detection</a>
@@ -35,39 +35,75 @@
 
     <div class="home-section">
         <p class="section-label">About the project</p>
-        <p class="home-text">This application was built as part of a curricular internship at Dell Technologies Montpellier. The goal is to explore real time face recognition.</p>
-        <p class="home-text">The system detects faces and bodies through a webcam feed, matches them against a database of known individuals, and can identify people even when their face is not visible using body shape, height and appearance as signals.</p>
+        <p class="home-text">This application was built as part of a curricular internship at Dell Technologies Montpellier. The goal: recognise people in real time using only a webcam.</p>
+        <p class="home-text">You register someone once by recording their face for a few seconds. From then on, the camera can identify them automatically — even if they turn around or move away, using their body shape and appearance as a backup signal.</p>
     </div>
 
     <div class="home-section">
-        <p class="section-label">How does it work?</p>
+        <p class="section-label">How to use it</p>
         <div class="hiw-list">
             <div class="hiw-item">
                 <div class="hiw-icon">01</div>
                 <div class="hiw-body">
-                    <h3 class="hiw-title">Face detection</h3>
-                    <p class="hiw-desc">Detects faces in real time using MediaPipe BlazeFace and generates a unique 512-dimensional embedding with ArcFace for each person.</p>
+                    <h3 class="hiw-title">Register a person</h3>
+                    <p class="hiw-desc">Go to the Register page. Point the webcam at someone, press the button, and move your head slowly in all directions for about 7 seconds. Then enter their name and click "Add to database".</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">02</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Start detection</h3>
+                    <p class="hiw-desc">Go to the Detect page. The camera starts automatically and identifies registered people in real time. A coloured box appears around each person — green if recognised with high confidence, yellow if uncertain.</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">03</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Works even from behind</h3>
+                    <p class="hiw-desc">If someone turns away from the camera, the system can still identify them using their body shape and appearance — no face needed.</p>
+                </div>
+            </div>
+            <div class="hiw-item">
+                <div class="hiw-icon">04</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Privacy first</h3>
+                    <p class="hiw-desc">No photos are ever saved. Your explicit consent is required before anything is stored. You can ask for your data to be deleted at any time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-divider"></div>
+
+    <div class="home-section">
+        <p class="section-label">Under the hood</p>
+        <div class="hiw-list">
+            <div class="hiw-item">
+                <div class="hiw-icon">01</div>
+                <div class="hiw-body">
+                    <h3 class="hiw-title">Face detection & embedding</h3>
+                    <p class="hiw-desc">Faces are detected using MediaPipe BlazeFace. Each face is then aligned and passed through ArcFace, which produces a unique 512-dimensional vector (embedding) representing that person's facial features.</p>
                 </div>
             </div>
             <div class="hiw-item">
                 <div class="hiw-icon">02</div>
                 <div class="hiw-body">
                     <h3 class="hiw-title">Body re-identification</h3>
-                    <p class="hiw-desc">Recognises people from behind or at a distance using body shape and appearance, even without a visible face, through a YOLOv8 detection pipeline.</p>
+                    <p class="hiw-desc">Body detection is handled by YOLOv8. A custom tracker links body detections to previously identified faces, allowing re-identification even when the face is not visible.</p>
                 </div>
             </div>
             <div class="hiw-item">
                 <div class="hiw-icon">03</div>
                 <div class="hiw-body">
-                    <h3 class="hiw-title">Vector database</h3>
-                    <p class="hiw-desc">Embeddings are stored in Qdrant and matched using cosine similarity for fast and accurate recognition in real time.</p>
+                    <h3 class="hiw-title">Vector database & matching</h3>
+                    <p class="hiw-desc">Embeddings are stored in Qdrant, a vector database. At inference time, the live embedding is compared against stored ones using cosine similarity. A score above 0.70 is considered a confident match; between 0.50 and 0.70 it is flagged as uncertain.</p>
                 </div>
             </div>
             <div class="hiw-item">
                 <div class="hiw-icon">04</div>
                 <div class="hiw-body">
-                    <h3 class="hiw-title">GDPR compliant</h3>
-                    <p class="hiw-desc">No photos are stored only biometric vectors. Explicit consent is required before any data is saved to the database.</p>
+                    <h3 class="hiw-title">Real-time pipeline</h3>
+                    <p class="hiw-desc">Frames are streamed from the browser to a FastAPI backend via WebSocket. Detection, embedding and matching happen server-side on each frame, and results are sent back instantly to update the overlay.</p>
                 </div>
             </div>
         </div>
@@ -79,13 +115,13 @@
         <div class="cta-card cta-main">
             <p class="cta-label">Step 1</p>
             <h3 class="cta-title">Register a person</h3>
-            <p class="cta-desc">Add someone to the database by taking 5 photos with the webcam or uploading images from your computer.</p>
+            <p class="cta-desc">Point the webcam at someone, press the button, and move your head slowly for a few seconds. Fill in their name and you're done.</p>
             <a href="index.html" class="btn btn-primary">Go to Register</a>
         </div>
         <div class="cta-card">
             <p class="cta-label">Step 2</p>
             <h3 class="cta-title">Start detection</h3>
-            <p class="cta-desc">Open the live webcam feed to identify people already registered in the database in real time.</p>
+            <p class="cta-desc">Open the live camera view. Registered people will be identified automatically with a coloured box around their face.</p>
             <a href="detection.html" class="btn btn-secondary">Go to Detect</a>
         </div>
     </div>
