@@ -2,7 +2,10 @@ import cv2
 import io
 import threading
 import sys
-import time  # <-- Ajout du module time
+import time
+import datetime
+import os
+
 sys.path.append('../')
 
 from fastapi import FastAPI, UploadFile, File, Form
@@ -21,14 +24,16 @@ from qdrant_db import save_embedding, create_collection, search_embedding
 from DrawBox import DrawBox
 from bodyDetection import BodyDetect_from_frame
 
-
+from mtcnn import MTCNN
+from  mtcnn.utils.images  import  load_image
 
 app = FastAPI()
 
 # MODELE
 model_mediapipe = load_model("blazeface",  False)
 model_arcface = load_model("arcface",  True)
-model_yolo = load_model("yolo",  True , processeur_intel = False)
+model_yolo = load_model("yolo",True)
+
 
 
 app.add_middleware(
@@ -67,7 +72,7 @@ class CameraStream:
             with self.lock_raw:
                 self.raw_frame = frame
 
-            print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
+            #print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
 
     def _ai_loop(self):
         """Pipeline IA — prend la dernière frame dispo et la traite"""
@@ -80,8 +85,6 @@ class CameraStream:
                 continue
 
             try:
-
-
                 # detect face
                 t0 = time.perf_counter()
                 boxes_face, result, image_rgb = FacesDetects_from_bytes(
@@ -99,10 +102,10 @@ class CameraStream:
                 t_embedding = 0
                 t_recherche = 0
 
-                if result and result.detections:
+                if result and result.detections :
                     # Alignment
                     t0 = time.perf_counter()
-                    crops = align_crop(image_rgb, result)
+                    crops = align_crop(image_rgb, result ,"mediapipe")
                     t_alignement = (time.perf_counter() - t0) * 1000
 
                     for face_cropped in crops:
@@ -121,8 +124,9 @@ class CameraStream:
                 #  Dessin  encodage final
                 t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
-                bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-                _, buf = cv2.imencode('.jpg', bgr, [cv2.IMWRITE_JPEG_QUALITY, 100])
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
+                #bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
+                _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 100])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
 
                 with self.lock_out:

@@ -81,11 +81,11 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
     else:
         image_bgr = image_bytes
     
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    #image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    image_rgb = image_bytes
     
     box = []
     if method == "mtcnn":
-        detector = MTCNN(device="CPU:0")
         result = detector.detect_faces(image_rgb)
         box = [[f['box'][0], f['box'][1], f['box'][0] + f['box'][2], f['box'][1] + f['box'][3]] for f in result]
         return box, result, image_rgb
@@ -113,19 +113,19 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
 
 if __name__ == "__main__" :
     
-    url = "images/anthony.jpg" 
+    url = "images/foule.jpg" 
     box_mtcnn , y , image = FacesDetects_mtcnn(url)
     box_mediapipe , y , image = FacesDetects_mediapipe(url)
 
-    image_mtcnn =  DrawBox(image , box_mtcnn)
-    image_mediapipe =  DrawBox(image , box_mediapipe)
+    image_mtcnn =  DrawBox(image , box_mtcnn , 'red')
+    image_mediapipe =  DrawBox(image , box_mediapipe , 'red')
 
     image_mtcnn = cv2.cvtColor(image_mtcnn, cv2.COLOR_RGB2BGR)
     image_mediapipe = cv2.cvtColor(image_mediapipe, cv2.COLOR_RGB2BGR)
 
     succes = cv2.imwrite("images/resultats/anthony_mtcnn.jpg", image_mtcnn)
     succes = cv2.imwrite("images/resultats/anthony_mediapipe.jpg", image_mediapipe)
-
+    
     # Byte
     model_path_blazeface='model/blaze_face_short_range.tflite'
 

@@ -5,9 +5,31 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
 
+def align_crop(image, result, method="mediapipe"):
+    crops = []
+
+    if method == "mtcnn":
+        for face in result:
+            kp = face['keypoints']
+            left_eye  = kp['left_eye']
+            right_eye = kp['right_eye']
+            box = face['box']  # [x, y, w, h]
+
+            # ton alignement existant avec ces coordonnées
+            crop = _do_alignment(image, left_eye, right_eye, box)
+            crops.append(crop)
+
+    elif method == "mediapipe":
+        for d in result.detections:
+            # ton code actuel MediaPipe
+            ...
+
+    return crops
 
 
-def align_crop(image, listFace):
+
+
+def align_crop(image, listFace, method):
     """
     aligns and cuts out the face
     Args:
@@ -19,34 +41,45 @@ def align_crop(image, listFace):
             - face_final_bgr (numpy.ndarray): face align and crop.
     """
     im_height, im_width = image.shape[:2]
-
     crops = [] 
-    for detection in listFace.detections:
-        keypoints = detection.keypoints
+
+    if method == "mtcnn":
+        for face in result:
+            kp = face['keypoints']
+            left_eye  = kp['left_eye']
+            right_eye = kp['right_eye']
+            box = face['box']
+
+            crop = _do_alignment(image, left_eye, right_eye, box)
+            crops.append(crop)
+    elif method == "mediapipe":
+
+        for detection in listFace.detections:
+            keypoints = detection.keypoints
+            
+            left_eye = keypoints[0]
+            right_eye = keypoints[1]
+
+            left_eye_px = (int(left_eye.x * im_width), int(left_eye.y * im_height))
+            right_eye_px = (int(right_eye.x * im_width), int(right_eye.y * im_height))
+            dY = right_eye_px[1] - left_eye_px[1]
+            dX = right_eye_px[0] - left_eye_px[0]            
+            angle = np.degrees(np.arctan2(dY, dX))
+
+            eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (left_eye_px[1]  + right_eye_px[1]) / 2)
+
+            M = cv2.getRotationMatrix2D(eye_center, angle, scale=1.0)
+            rotated_img = cv2.warpAffine(image, M, (im_width, im_height), flags=cv2.INTER_CUBIC)
+
+            bbox = detection.bounding_box
+            x, y, bw, bh = int(bbox.origin_x), int(bbox.origin_y), int(bbox.width), int(bbox.height)
+            face_crop = rotated_img[max(0, y):min(im_height, y+bh), max(0, x):min(im_width, x+bw)]
+
+            face_final = cv2.resize(face_crop, (112, 112))
+            face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
+
+            crops.append(face_final_bgr)
         
-        left_eye = keypoints[0]
-        right_eye = keypoints[1]
-
-        left_eye_px = (int(left_eye.x * im_width), int(left_eye.y * im_height))
-        right_eye_px = (int(right_eye.x * im_width), int(right_eye.y * im_height))
-        dY = right_eye_px[1] - left_eye_px[1]
-        dX = right_eye_px[0] - left_eye_px[0]            
-        angle = np.degrees(np.arctan2(dY, dX))
-
-        eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (left_eye_px[1]  + right_eye_px[1]) / 2)
-
-        M = cv2.getRotationMatrix2D(eye_center, angle, scale=1.0)
-        rotated_img = cv2.warpAffine(image, M, (im_width, im_height), flags=cv2.INTER_CUBIC)
-
-        bbox = detection.bounding_box
-        x, y, bw, bh = int(bbox.origin_x), int(bbox.origin_y), int(bbox.width), int(bbox.height)
-        face_crop = rotated_img[max(0, y):min(im_height, y+bh), max(0, x):min(im_width, x+bw)]
-
-        face_final = cv2.resize(face_crop, (112, 112))
-        face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
-
-        crops.append(face_final_bgr)
-    
     return crops 
 
 
