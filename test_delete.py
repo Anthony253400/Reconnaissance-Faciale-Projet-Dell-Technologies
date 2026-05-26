@@ -1,21 +1,5 @@
-from qdrant_db import client, COLLECTION
+from qdrant_db import client, COLLECTION, delete_person
 from qdrant_client.models import Filter, FieldCondition, MatchValue, FilterSelector
-
-def delete_person(name):
-    client.delete(
-        collection_name=COLLECTION,
-        points_selector=FilterSelector(
-            filter=Filter(
-                must=[
-                    FieldCondition(
-                        key="name",
-                        match=MatchValue(value=name)
-                    )
-                ]
-            )
-        )
-    )
-    print(f"Deleted all entries for: {name}")
 
 #delete_person("lea carminati")
 

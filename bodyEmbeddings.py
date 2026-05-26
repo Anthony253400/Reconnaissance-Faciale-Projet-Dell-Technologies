@@ -16,6 +16,15 @@ torchreid.utils.load_pretrained_weights(model, weights_path)
 model.eval()
 
 def preprocessing(crop_bgr):
+    """
+    Preprocesses a cropped image for embedding generation.
+
+    Args:
+        crop_bgr (numpy.ndarray): The cropped image in BGR format.
+
+    Returns:
+        torch.Tensor: The preprocessed image tensor.
+    """
     rgb = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB)
     resized = cv2.resize(rgb, (128, 256))
     normalized = resized.astype(np.float32) / 255.0
@@ -26,6 +35,15 @@ def preprocessing(crop_bgr):
     return tensor
 
 def get_body_embedding(crop_bgr):
+    """
+    Generates a body embedding for a given cropped image.
+
+    Args:
+        crop_bgr (numpy.ndarray): The cropped image in BGR format.
+
+    Returns:
+        numpy.ndarray: The generated body embedding.
+    """
     tensor = preprocessing(crop_bgr)
     with torch.no_grad():
         embedding = model(tensor)

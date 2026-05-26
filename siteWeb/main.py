@@ -18,21 +18,19 @@ from bodyDetection import BodyDetect_from_bytes
 from bodyAlignment import body_crop
 from tracker import BodyTracker
 
-
-
-
 # create the FastAPI application
 app = FastAPI()
 
+#path to the face detection model (blazeface) and body detection model (yolov8n)
 model_path_blazeface='../model/blaze_face_short_range.tflite'
 model_path_yolov = cv2.dnn.readNetFromONNX("../model/yolov8n.onnx")
 
-
+#initialize the mediapipe face detectore with the blazeface model
 base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
 options = vision.FaceDetectorOptions(base_options=base_options)
 detector = vision.FaceDetector.create_from_options(options)
 
-# CORS — allows the browser to send requests to FastAPI
+# allows the browser to send requests to FastAPI
 # without this, the browser blocks requests for security reasons
 app.add_middleware(
     CORSMiddleware,
@@ -41,41 +39,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── ROUTE /add ──
-# receives : firstName (text) + lastName (text) + photo (file)
-# returns  : a confirmation message
-@app.post("/add")
-async def add_person(
-    firstName: str = Form(...),
-    lastName:  str = Form(...),
-    photo:     UploadFile = File(...)
-):
-    contents = await photo.read()
-    boxes_face, result, image = FacesDetects_from_bytes(contents,"mediapipe",detector)
+# ADD PERSON
+@app.websocket("/ws/add")
+async def add_person(websocket: WebSocket):
+    """
+    websocket endpoint for registration of a new person in the database
 
-    image_boxed = DrawBox(image, boxes_face, 'green')
+    arguments:
+    - receives a JSON message with 'firstName' and 'lastName'
+    - then receives webcam frames as bytes through the websocket
 
-    # convert the boxed image to bytes
-    image_boxes_bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-    _, buffer = cv2.imencode('.jpg', image_boxes_bgr)
-    image_bytes = buffer.tobytes()
+    process:
+    - receives the person's name as a JSON message
+    - for each received frame, detects the face using mediapipe and extracts the aligned face crop
+    - computes the embedding of the face crop using a pre-trained model
+    - saves the embedding in the Qdrant vector database with the person's name as payload
+    returns:
+    - a confirmation message through the websocket once the embedding is saved
 
-    #print(f"Received: {firstName} {lastName}, file: {photo.filename}")
-    crops = align_crop(image, result)
-    print(f"Crops trovati: {len(crops)} per {firstName} {lastName}")
-
+    """
+    await websocket.accept()
+    meta = await websocket.receive_json()
+    firstName = meta["firstName"]
+    lastName  = meta["lastName"]
     create_collection()
 
-    for face_cropped in crops:
-        embedding = get_embedding(face_cropped)
-        #print(f"Embedding shape: {embedding.shape}")
-        save_embedding(f"{firstName} {lastName}".strip().lower(), embedding)
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            boxes_face, result, image = FacesDetects_from_bytes(data, "mediapipe", detector)
+            if result and result.detections:
+                crops = align_crop(image, result)
+                for face_cropped in crops:
+                    embedding = get_embedding(face_cropped)
+                    save_embedding(f"{firstName} {lastName}".strip().lower(), embedding)
+            await websocket.send_json({"status": "ok"})
+    except Exception:
+        pass
 
-    # sends image to browser
-    return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
-
+# DETECTION
 @app.websocket("/ws/detect")
 async def detec_video(websocket: WebSocket):
+    """
+    websocket endpoint for real-time face and body detection and recognition
+
+    arguments:
+    - receives webcam frames as bytes through the websocket
+
+    process:
+    - receives webcam frames as bytes through the websocket
+    - detects faces and bodies in the frames using mediapipe and yolov8n
+    - for each detected face, extracts the aligned face crop and computes its embedding
+    - searches the embedding in the Qdrant database to find the best matching name (if above threshold)
+    - assigns names to detected bodies based on their proximity to detected faces and embedding similarity (tracker.update)
+    - sends back the detection results (face boxes, body boxes, names, scores) through
+        the websocket for display on the frontend
+    """
     await websocket.accept()
     tracker = BodyTracker()
     while True:

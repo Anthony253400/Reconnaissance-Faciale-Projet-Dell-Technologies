@@ -1,13 +1,20 @@
 const MIRROR = true; // set to true if your webcam feed is mirrored (front camera)
 
+/**
+    * INITIALISATION the webcam and start the detection loop
+    * called automatically when the page loads
+    * mirrors the webcam if mirror is set to true
+*/  
 async function init() {
     document.getElementById('webcam').style.transform = MIRROR ? 'scaleX(-1)' : '';
     await startWebcam();
     startDetection();
 }
 
-// WEBCAM
-// starts the webcam and connects the stream to the <video> tag
+/**
+    * WEBCAM
+    * starts the webcam and connects the stream to the <video> tag
+*/  
 async function startWebcam() {
     try {
         // ask the browser for camera access
@@ -22,8 +29,20 @@ async function startWebcam() {
 }
 
 
-// FACE DETECTION
-
+/**
+    * FACE DETECTION
+    * opens websocket connection to server and starts the detection loop.
+    * on each frame captures current video frame and sends it to the server a s a jpeg blob
+    * resceives detection result ( bounding boxes, names and scores)
+    * clears and draws them on the overlay canvas
+    * 
+    * The face bounding boxes are color coded based on the confidence score:
+    * - green for scores >= 0.70 (high confidence)
+    * - yellow for scores >= 0.50 and < 0.70 (medium confidence)
+    * - gray for scores < 0.50 (low confidence)
+    * 
+    * the body boxes are drawn in red. a new socket is sent only when the socket is open and the send buffer is emplty ( avoid flooding server)
+*/  
 async function startDetection() {
     const video = document.getElementById('webcam');
     const overlay = document.getElementById('overlay');

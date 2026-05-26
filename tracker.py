@@ -74,10 +74,25 @@ def assign_faces_to_bodies(face_boxes, body_boxes, threshold=0.3):
 
 
 def get_centroid(box):
+    """
+    Computes the centroid of a bounding box.
+    Args:
+        box (list): A bounding box in the format [x1, y1, x2, y2].
+    Returns:
+        tuple: The (x, y) coordinates of the centroid.
+    """
     return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
 
 
 def centroid_distance(box1, box2):
+    """
+    Computes the Euclidean distance between the centroids of two bounding boxes.
+    Args:
+        box1 (list): A bounding box in the format [x1, y1, x2, y2].
+        box2 (list): Another bounding box in the format [x1, y1, x2, y2].
+    Returns:
+        float: The Euclidean distance between the centroids.
+    """
     c1 = get_centroid(box1)
     c2 = get_centroid(box2)
     return np.sqrt((c1[0] - c2[0])**2 + (c1[1] - c2[1])**2)

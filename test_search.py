@@ -6,17 +6,17 @@ from faceAlignment import align_crop
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# inizializza mediapipe
+# initialize mediapipe
 model_path = "model/blaze_face_short_range.tflite"
 base_options = python.BaseOptions(model_asset_path=model_path)
 options = vision.FaceDetectorOptions(base_options=base_options)
 detector = vision.FaceDetector.create_from_options(options)
 
-# carica la foto come bytes
+# load test image and convert to bytes
 with open("images/lea1.jpg", "rb") as f:
     image_bytes = f.read()
 
-# stessa pipeline di /add
+# same pipeline as /add
 box, result, image = FacesDetects_from_bytes(image_bytes, "mediapipe", detector)
 face_cropped = align_crop(image, result)
 embedding = get_embedding(face_cropped)

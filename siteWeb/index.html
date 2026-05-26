@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<style>
+    .btn-capture-wrap { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
+.capture-ring { position: absolute; top: 0; left: 0; width: 72px; height: 72px; transform: rotate(-90deg); pointer-events: none; }
+.capture-ring-bg { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 3; }
+.capture-ring-prog { fill: none; stroke: #0076CE; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 201.06; stroke-dashoffset: 201.06; transition: stroke-dashoffset 0.12s linear; }
+</style>
 
 <nav class="navbar">
     <div class="navbar-inner">
@@ -63,7 +69,13 @@
                         <p class="cam-step-overlay" id="progress"></p>
                     </div>
                     <div class="cam-overlay-bottom">
-                        <button class="btn-capture" id="btn-record" onclick="startRecording()"></button>
+                        <div class="btn-capture-wrap">
+                            <svg class="capture-ring" viewBox="0 0 72 72" aria-hidden="true">
+                                <circle class="capture-ring-bg" cx="36" cy="36" r="32"/>
+                                <circle class="capture-ring-prog" id="capture-ring" cx="36" cy="36" r="32"/>
+                            </svg>
+                            <button class="btn-capture" id="btn-record" onclick="startRecording()"></button>
+                        </div>
                     </div>
                 </div>
             </div>

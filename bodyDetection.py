@@ -6,6 +6,19 @@ from DrawBox import DrawBox ,color_name_to_rgb
 
 
 def BodyDetect(url_img : str , detector ):
+    """
+    Detects human bodies in an image using a YOLOv8 ONNX model.
+
+    Args:
+        url_img (str): Path to the input image.
+        detector: Pre-initialized cv2.dnn network (YOLOv8 ONNX).
+
+    Returns:
+        tuple:
+            - boxes (list): A list of lists in the format [x1, y1, x2, y2].
+            - final_confidences (list): Confidence scores for each detected body.
+            - img_rgb (numpy.ndarray): The loaded image in RGB format.
+    """
     img = cv2.imread(url_img)
     h, w, _ = img.shape
 
