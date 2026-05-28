@@ -96,11 +96,17 @@ def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use
 
 def load_model(name : str , use_gpu : bool , processeur_intel :bool = False):
     if name == "yolo":
-        _, model = load_yolo(use_gpu = use_gpu, processeur_intel = processeur_intel)
-        return model
+        return load_yolo(use_gpu = use_gpu, processeur_intel = processeur_intel)
+        
     if name == "arcface":
         return load_arcface(use_gpu = use_gpu)
     if name == "blazeface":
         return load_blazeface(use_gpu=use_gpu)
     else:
         raise ValueError(f"Modèle inconnu : '{name}'. Choix valides : yolo, arcface, blazeface")
+    
+if __name__ == "__main__" :
+    model = load_model("yolo",True)
+    backend , session = model 
+
+    print(ort.get_all_providers())
