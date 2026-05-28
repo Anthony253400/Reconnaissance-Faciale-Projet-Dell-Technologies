@@ -1,9 +1,15 @@
+import os
+import sys
 import cv2
 import numpy as np
-from detecVisage import FacesDetects_from_bytes
+import os
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
+
+sys.path.append('../') 
+from fonction.detecVisage import FacesDetects_from_bytes
+
 
 
 

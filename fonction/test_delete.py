@@ -1,4 +1,4 @@
-from qdrant_db import client, COLLECTION
+from fonction.qdrant_db import client, COLLECTION
 from qdrant_client.models import Filter, FieldCondition, MatchValue, FilterSelector
 
 def delete_person(name):

@@ -5,7 +5,6 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
 import cv2
-from DrawBox import DrawBox
 
 
 def FacesDetects_mtcnn(url_img : str ):

@@ -1,22 +1,23 @@
 import sys
 import io
 import cv2
-sys.path.append('../')  # add parent directory to path to import detecVisage
+sys.path.append('../') 
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
-from detecVisage import FacesDetects_from_bytes
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import mediapipe as mp
-from faceAlignment import align_crop
-from embeddings import get_embedding
-from qdrant_db import save_embedding, create_collection, search_embedding
-from DrawBox import  DrawBox , color_name_to_rgb
-from bodyDetection import BodyDetect_from_bytes
-from bodyAlignment import body_crop
-from tracker import BodyTracker
+
+from fonction.detecVisage import FacesDetects_from_bytes
+from fonction.faceAlignment import align_crop
+from fonction.embeddings import get_embedding
+from fonction.qdrant_db import save_embedding, create_collection, search_embedding
+from fonction.DrawBox import  DrawBox
+from fonction.bodyDetection import BodyDetect_from_bytes
+from fonction.bodyAlignment import body_crop
+from fonction.tracker import BodyTracker
 
 
 

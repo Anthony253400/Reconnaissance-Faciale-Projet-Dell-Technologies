@@ -1,8 +1,8 @@
 import cv2
-from embeddings import get_embedding
-from qdrant_db import search_embedding
+from fonction.embeddings import get_embedding
+from fonction.qdrant_db import search_embedding
 from detecVisage import FacesDetects_from_bytes
-from faceAlignment import align_crop
+from fonction.faceAlignment import align_crop
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
