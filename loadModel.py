@@ -30,7 +30,7 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
         print("[ModelLoader] ArcFace chargé sur CPU ✅")
         return session
 
-def load_yolo(model_path: str = "../model/yolov8n.onnx", use_gpu: bool = True, processeur_intel: bool = False):
+def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = True, processeur_intel: bool = False):
     """
     Charge YOLOv8 au format ONNX.
     Retourne un tuple ('onnx'|'opencv', model_instance)
@@ -85,6 +85,11 @@ def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use
     use_gpu=True  → Delegate GPU
     use_gpu=False → CPU
     """
+    if model_path =='blazeface_short':
+        model_path = '../model/blaze_face_short_range.tflite'
+    else:
+        model_path = '../model/blaze_face_full_range.tflite'
+
     from mediapipe.tasks import python
     from mediapipe.tasks.python import vision
 
@@ -100,8 +105,10 @@ def load_model(name : str , use_gpu : bool , processeur_intel :bool = False):
         
     if name == "arcface":
         return load_arcface(use_gpu = use_gpu)
-    if name == "blazeface":
+    if name == "blazeface_short":
         return load_blazeface(use_gpu=use_gpu)
+    if name == "blazeface_full":
+        return load_blazeface(model_path = name , use_gpu=use_gpu)
     else:
         raise ValueError(f"Modèle inconnu : '{name}'. Choix valides : yolo, arcface, blazeface")
     

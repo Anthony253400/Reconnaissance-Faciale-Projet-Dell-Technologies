@@ -52,13 +52,13 @@ def BodyDetect_from_frame(img, model):
     h, w, _ = img.shape
 
     # 1. Préparation du blob (même pour les deux backends)
-    img_resized = cv2.resize(img, (640, 640))
+    img_resized = cv2.resize(img, (320, 320))
     blob = img_resized.astype(np.float32) / 255.0       # [0,1]
     blob = blob[..., ::-1]                               # BGR → RGB
     blob = np.transpose(blob, (2, 0, 1))                 # HWC → CHW
     blob = np.expand_dims(blob, axis=0)                  # CHW → NCHW
     t_blob = time.perf_counter()
-    print(f"[Timer] 1. Blob : {(t_blob - t_start)*1000:.2f} ms")
+    #print(f"[Timer] 1. Blob : {(t_blob - t_start)*1000:.2f} ms")
 
     # 2. Inférence selon le backend
     if backend == 'onnx':
@@ -73,7 +73,7 @@ def BodyDetect_from_frame(img, model):
         predictions = np.squeeze(outputs[0]).T
 
     t_infer = time.perf_counter()
-    print(f"[Timer] 2. Inférence : {(t_infer - t_blob)*1000:.2f} ms")
+    #print(f"[Timer] 2. Inférence : {(t_infer - t_blob)*1000:.2f} ms")
 
     # 3. Filtrage des détections
     box = []
@@ -88,7 +88,7 @@ def BodyDetect_from_frame(img, model):
                 y1 = int((cy - rh/2) * (h / 640))
                 bw = int(rw * (w / 640))
                 bh = int(rh * (h / 640))
-                box.append([x1, y1, bw, bh])
+                box.append([x1*2, y1*2, bw*2, bh*2])
                 confidences.append(float(score))
 
     # 4. NMS

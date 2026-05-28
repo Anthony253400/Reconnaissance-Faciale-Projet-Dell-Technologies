@@ -5,8 +5,7 @@ import numpy as np
 
 def preprocessing(img):
     #rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    resized_img = cv2.resize(img, (112, 112))
-    normalized_img = (resized_img - 127.5) / 128.0
+    normalized_img = (img - 127.5) / 128.0
    
     img = normalized_img[np.newaxis, :]
     return img.astype(np.float32)

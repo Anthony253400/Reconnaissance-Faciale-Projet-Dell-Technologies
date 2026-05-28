@@ -30,7 +30,7 @@ from  mtcnn.utils.images  import  load_image
 app = FastAPI()
 
 # MODELE
-model_mediapipe = load_model("blazeface",  False)
+model_mediapipe = load_model("blazeface_full",  True)
 model_arcface = load_model("arcface",  True)
 model_yolo = load_model("yolo",True)
 
@@ -46,6 +46,14 @@ app.add_middleware(
 class CameraStream:
     def __init__(self, src=0):
         self.cap = cv2.VideoCapture(src)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv2.CAP_PROP_FPS,30)
+
+        print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+
         self.lock_raw = threading.Lock()
         self.lock_out = threading.Lock()
         
@@ -85,27 +93,26 @@ class CameraStream:
                 continue
 
             try:
-                # detect face
+                # Initialisation des variables de temps
+                t_decode, t_cv_color, t_infer_face = 0, 0, 0
+                t_alignement, t_embedding, t_recherche = 0, 0, 0
+                
+                # Face Detection
                 t0 = time.perf_counter()
                 boxes_face, result, image_rgb = FacesDetects_from_bytes(
-                    frame, "mediapipe", model_mediapipe , numpy= True)
-                t_detection_face = (time.perf_counter() - t0) * 1000
+                    frame, "mediapipe", model_mediapipe , numpy=True)
+                t_detection_face_total = (time.perf_counter() - t0) * 1000
 
-
+                # Body Detection
                 t0 = time.perf_counter()
                 boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
-            
                 labels = []
-                t_alignement = 0
-                t_embedding = 0
-                t_recherche = 0
-
-                if result and result.detections :
+                if result and result.detections:
                     # Alignment
                     t0 = time.perf_counter()
-                    crops = align_crop(image_rgb, result ,"mediapipe")
+                    crops = align_crop(image_rgb, result , "mediapipe")
                     t_alignement = (time.perf_counter() - t0) * 1000
 
                     for face_cropped in crops:
@@ -119,27 +126,42 @@ class CameraStream:
                         name, score = search_embedding(embedding)
                         t_recherche += (time.perf_counter() - t2) * 1000
 
-                        labels.append(f"{name} ({score:.2f})" if name else "inconnu")
+                        labels.append(f"{name} ({score:.2f})" if name and score is not None else "inconnu")
 
-                #  Dessin  encodage final
+                # Dessin & Encodage final
                 t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
                 image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
-                #bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-                _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 100])
+                _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
 
                 with self.lock_out:
                     self.latest_frame = buf.tobytes()
 
                 t_total = (time.perf_counter() - t_start_total) * 1000
-                print(f"[AI]      Total: {t_total:.1f}ms |Det Body: {t_detection_body:.1f}ms | Det Face: {t_detection_face:.1f}ms | Ali: {t_alignement:.1f}ms | Emb: {t_embedding:.1f}ms | Rech: {t_recherche:.1f}ms | Dessin/Enc2: {t_formatage_final:.1f}ms")
+                
+                # Affichage dans le terminal séparé par des ';'
+                print(
+                    f"Total:{t_total:.1f}ms;"
+                    f"Decodage:{t_decode:.1f}ms;"
+                    f"ConvColor:{t_cv_color:.1f}ms;"
+                    f"InferFace:{t_infer_face:.1f}ms;"
+                    f"DetFaceTotal:{t_detection_face_total:.1f}ms;"
+                    f"DetBody:{t_detection_body:.1f}ms;"
+                    f"Alignement:{t_alignement:.1f}ms;"
+                    f"Embedding:{t_embedding:.1f}ms;"
+                    f"Recherche:{t_recherche:.1f}ms;"
+                    f"DessinEnc:{t_formatage_final:.1f}ms"
+                )
 
             except Exception as e:
                 print(f"Erreur _ai_loop : {e}")
                 _, buf = cv2.imencode('.jpg', frame)
                 with self.lock_out:
                     self.latest_frame = buf.tobytes()
+
+
+
 
     def get_frame(self) -> bytes | None:
         with self.lock_out:
