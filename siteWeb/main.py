@@ -33,7 +33,7 @@ app = FastAPI()
 
 
 # MODELE
-model_mediapipe = load_model("blazeface_short",  False)
+model_mediapipe = load_model("blazeface_full",  False)
 model_arcface = load_model("arcface",  False)
 model_yolo = load_model("yolo",False)
 
@@ -185,12 +185,6 @@ class CameraStream:
                     self.latest_frame = buf.tobytes()
 
 
-
-
-
-
-
-
     def get_frame(self) -> bytes | None:
         with self.lock_out:
             return self.latest_frame
@@ -211,7 +205,6 @@ def get_frame():
     if frame is None:
         return Response(status_code=503)
     return Response(content=frame, media_type="image/jpeg")
-
 
 
 
