@@ -18,23 +18,18 @@ from fonction.DrawBox import  DrawBox
 from fonction.bodyDetection import BodyDetect_from_bytes
 from fonction.bodyAlignment import body_crop
 from fonction.tracker import BodyTracker
+from fonction.loadModel import load_model
 
 
 
-
-# create the FastAPI application
+#API
 app = FastAPI()
 
-model_path_blazeface='../model/blaze_face_short_range.tflite'
-model_path_yolov = cv2.dnn.readNetFromONNX("../model/yolov8n.onnx")
+#Model
+model_mediapipe = load_model("blazeface_full",  True)
+model_arcface = load_model("arcface",  True)
+model_yolo = load_model("yolo",True)
 
-
-base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
-options = vision.FaceDetectorOptions(base_options=base_options)
-detector = vision.FaceDetector.create_from_options(options)
-
-# CORS — allows the browser to send requests to FastAPI
-# without this, the browser blocks requests for security reasons
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
