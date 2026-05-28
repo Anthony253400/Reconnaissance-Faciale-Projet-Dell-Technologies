@@ -1,34 +1,42 @@
-import sys
-import io
 import cv2
-sys.path.append('../') 
-from fastapi import FastAPI, UploadFile, File, Form, WebSocket
+import io
+import threading
+import sys
+import time
+import datetime
+import os
+
+
+sys.path.append('../')
+
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, Response
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import mediapipe as mp
+from mtcnn import MTCNN
+from  mtcnn.utils.images  import  load_image
 
+
+from fonction.loadModel import load_model
 from fonction.detecVisage import FacesDetects_from_bytes
 from fonction.faceAlignment import align_crop
 from fonction.embeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
-from fonction.DrawBox import  DrawBox
-from fonction.bodyDetection import BodyDetect_from_bytes
-from fonction.bodyAlignment import body_crop
-from fonction.tracker import BodyTracker
-from fonction.loadModel import load_model
+from fonction.DrawBox import DrawBox
+from fonction.bodyDetection import BodyDetect_from_frame
 
 
 
-#API
 app = FastAPI()
 
-#Model
-model_mediapipe = load_model("blazeface_full",  True)
-model_arcface = load_model("arcface",  True)
-model_yolo = load_model("yolo",True)
+
+# MODELE
+model_mediapipe = load_model("blazeface_short",  False)
+model_arcface = load_model("arcface",  False)
+model_yolo = load_model("yolo",False)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,73 +45,231 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── ROUTE /add ──
-# receives : firstName (text) + lastName (text) + photo (file)
-# returns  : a confirmation message
+
+class CameraStream:
+    def __init__(self, src=0):
+        self.cap = cv2.VideoCapture(src)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv2.CAP_PROP_FPS,30)
+
+
+        print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+
+
+
+        self.lock_raw = threading.Lock()
+        self.lock_out = threading.Lock()
+       
+        self.raw_frame = None
+        self.latest_frame = None
+        self.running = True
+
+
+        self._t_capture = threading.Thread(target=self._capture_loop, daemon=True)
+        self._t_ai = threading.Thread(target=self._ai_loop, daemon=True)
+
+
+        self._t_capture.start()
+        self._t_ai.start()
+
+
+    def _capture_loop(self):
+        """Lit la caméra aussi vite que possible — aucune IA ici"""
+        while self.running:
+            t0 = time.perf_counter()
+            ok, frame = self.cap.read()
+            t_capture = (time.perf_counter() - t0) * 1000
+
+
+            if not ok:
+                continue
+
+
+            with self.lock_raw:
+                self.raw_frame = frame
+
+
+            #print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
+
+
+    def _ai_loop(self):
+        """Pipeline IA — prend la dernière frame dispo et la traite"""
+        while self.running:
+            t_start_total = time.perf_counter()
+
+
+            with self.lock_raw:
+                frame = self.raw_frame
+            if frame is None:
+                continue
+
+
+            try:
+                # Initialisation des variables de temps
+                t_decode, t_cv_color, t_infer_face = 0, 0, 0
+                t_alignement, t_embedding, t_recherche = 0, 0, 0
+               
+                # Face Detection
+                t0 = time.perf_counter()
+                boxes_face, result, image_rgb = FacesDetects_from_bytes(
+                    frame, "mediapipe", model_mediapipe , numpy=True)
+                t_detection_face_total = (time.perf_counter() - t0) * 1000
+
+
+                # Body Detection
+                t0 = time.perf_counter()
+                boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
+                t_detection_body = (time.perf_counter() - t0) * 1000
+
+
+                labels = []
+                if result and result.detections:
+                    # Alignment
+                    t0 = time.perf_counter()
+                    crops = align_crop(image_rgb, result , "mediapipe")
+                    t_alignement = (time.perf_counter() - t0) * 1000
+
+
+                    for face_cropped in crops:
+                        # Embedding
+                        t1 = time.perf_counter()
+                        embedding = get_embedding(face_cropped, model_arcface)
+                        t_embedding += (time.perf_counter() - t1) * 1000
+
+
+                        # Recherche BDD
+                        t2 = time.perf_counter()
+                        name, score = search_embedding(embedding)
+                        t_recherche += (time.perf_counter() - t2) * 1000
+
+
+                        labels.append(f"{name} ({score:.2f})" if name and score is not None else "inconnu")
+
+
+                # Dessin & Encodage final
+                t0 = time.perf_counter()
+                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
+                _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                t_formatage_final = (time.perf_counter() - t0) * 1000
+
+
+                with self.lock_out:
+                    self.latest_frame = buf.tobytes()
+
+
+                t_total = (time.perf_counter() - t_start_total) * 1000
+               
+                # Affichage dans le terminal séparé par des ';'
+                print(
+                    f"Total:{t_total:.1f}ms;"
+                    f"Decodage:{t_decode:.1f}ms;"
+                    f"ConvColor:{t_cv_color:.1f}ms;"
+                    f"InferFace:{t_infer_face:.1f}ms;"
+                    f"DetFaceTotal:{t_detection_face_total:.1f}ms;"
+                    f"DetBody:{t_detection_body:.1f}ms;"
+                    f"Alignement:{t_alignement:.1f}ms;"
+                    f"Embedding:{t_embedding:.1f}ms;"
+                    f"Recherche:{t_recherche:.1f}ms;"
+                    f"DessinEnc:{t_formatage_final:.1f}ms"
+                )
+
+
+            except Exception as e:
+                print(f"Erreur _ai_loop : {e}")
+                _, buf = cv2.imencode('.jpg', frame)
+                with self.lock_out:
+                    self.latest_frame = buf.tobytes()
+
+
+
+
+
+
+
+
+    def get_frame(self) -> bytes | None:
+        with self.lock_out:
+            return self.latest_frame
+
+
+    def release(self):
+        self.running = False
+        self.cap.release()
+
+
+camera = CameraStream(src=0)
+
+
+#frame
+@app.get("/frame")
+def get_frame():
+    frame = camera.get_frame()
+    if frame is None:
+        return Response(status_code=503)
+    return Response(content=frame, media_type="image/jpeg")
+
+
+
+
+#ADD people ad bd
 @app.post("/add")
 async def add_person(
     firstName: str = Form(...),
     lastName:  str = Form(...),
     photo:     UploadFile = File(...)
 ):
+    print(f"\n--- DEBUT AJOUT PERSONNE : {firstName} {lastName} ---")
+    t_start = time.perf_counter()
     contents = await photo.read()
-    boxes_face, result, image = FacesDetects_from_bytes(contents,"mediapipe",detector)
 
-    image_boxed = DrawBox(image, boxes_face, 'green')
 
-    # convert the boxed image to bytes
-    image_boxes_bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-    _, buffer = cv2.imencode('.jpg', image_boxes_bgr)
-    image_bytes = buffer.tobytes()
+    # Détection
+    t0 = time.perf_counter()
+    boxes_face, result, image = FacesDetects_from_bytes(contents, "mediapipe", model_mediapipe)
+    print(f"[/add] Détection : {(time.perf_counter() - t0) * 1000:.1f} ms")
 
-    #print(f"Received: {firstName} {lastName}, file: {photo.filename}")
+
+    # Alignement
+    t0 = time.perf_counter()
     crops = align_crop(image, result)
-    print(f"Crops trovati: {len(crops)} per {firstName} {lastName}")
+    print(f"[/add] Alignement : {(time.perf_counter() - t0) * 1000:.1f} ms")
+
 
     create_collection()
 
+
     for face_cropped in crops:
-        embedding = get_embedding(face_cropped)
-        #print(f"Embedding shape: {embedding.shape}")
+        # Embedding
+        t0 = time.perf_counter()
+        embedding = get_embedding(face_cropped, model_arcface)
+        print(f"[/add] Embedding : {(time.perf_counter() - t0) * 1000:.1f} ms")
+
+
+        # Sauvegarde
+        t0 = time.perf_counter()
         save_embedding(f"{firstName} {lastName}".strip().lower(), embedding)
+        print(f"[/add] Sauvegarde BDD : {(time.perf_counter() - t0) * 1000:.1f} ms")
 
-    # sends image to browser
-    return StreamingResponse(io.BytesIO(image_bytes), media_type="image/jpeg")
 
-@app.websocket("/ws/detect")
-async def detec_video(websocket: WebSocket):
-    await websocket.accept()
-    tracker = BodyTracker()
-    while True:
-        data = await websocket.receive_bytes()
-        boxes_face ,result, image = FacesDetects_from_bytes(data,"mediapipe",detector)
-        boxes_body, confidence, image = BodyDetect_from_bytes(data, model_path_yolov)
+    # Retourne la photo uploadée avec les boîtes dessinées
+    t0 = time.perf_counter()
+    image_boxed = DrawBox(image, boxes_face, 'green')
+    bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
+    _, buf = cv2.imencode('.jpg', bgr)
+    print(f"[/add] Dessin & Formatage final : {(time.perf_counter() - t0) * 1000:.1f} ms")
+    print(f"--- FIN AJOUT PERSONNE (Temps total : {(time.perf_counter() - t_start) * 1000:.1f} ms) ---\n")
 
-        names = [""] * len(boxes_face)
-        clean_names = [""] * len(boxes_face)
-        if result and result.detections:
-            crops = align_crop(image, result)
-            
-            for i, face_cropped in enumerate(crops):
-                embedding = get_embedding(face_cropped)
-                name, score = search_embedding(embedding)
-                score_str = f"{score:.2f}" if score else "?"
-                names[i] = f"{name} ({score_str})"
-                clean_names[i] = name
-        crops_body = body_crop(image, boxes_body) if boxes_body else []
-        body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
-        #print(f"body_names: {body_names}")
-        #print(f"clean_names: {clean_names}")
-        await websocket.send_json({
-            "faces": boxes_face , 
-            "body":boxes_body ,  
-            "names": names,
-            "body_names": body_names
-        })
 
+    return StreamingResponse(io.BytesIO(buf.tobytes()), media_type="image/jpeg")
 
 
 
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+
+
 

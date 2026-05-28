@@ -3,10 +3,6 @@ import cv2
 CUDA_AVAILABLE = "CUDAExecutionProvider" in ort.get_available_providers()
 
 
-
-
-
-
 def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVAILABLE ):
     """
     Charge ArcFace (ONNX).
