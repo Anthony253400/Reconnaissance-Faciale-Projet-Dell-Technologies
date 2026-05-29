@@ -26,20 +26,51 @@ def color_name_to_rgb(color_name: str):
     }
     return colors.get(color_name.lower(), (255, 255, 255))
 
-def DrawBox(image, list_boxes , color):
+def DrawBox(image, list_boxes, color, labels=None):
     """
-    Draws bounding boxes around detected faces on the image.
-    
+    Draws bounding boxes and optional labels above each box.
+
     Args:
-        - image (numpy.ndarray): The original image data in RGB format.
-        - list_boxes (list): A list of list in the format [x1, y1, x2, y2] which contains the rectangles of the face or body.
+        - image (numpy.ndarray): Image in RGB format.
+        - list_boxes (list): List of [x1, y1, x2, y2].
+        - color (str): Box color name.
+        - labels (list[str], optional): Names to display above each box.
 
     Returns:
-        - img_copy (numpy.ndarray): A copy of the input image with bounding boxes drawn.
-
+        - img_copy (numpy.ndarray): Image with boxes and labels drawn.
     """
     img_copy = image.copy()
-    for box in list_boxes:
-        x1, y1, x2, y2 = box
-        cv2.rectangle(img_copy, (int(x1), int(y1)), (int(x2), int(y2)), color_name_to_rgb(color), 2)
+    rgb = color_name_to_rgb(color)
+
+    for i, box in enumerate(list_boxes):
+        x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+
+        # Boîte
+        cv2.rectangle(img_copy, (x1, y1), (x2, y2), rgb, 2)
+
+        # Label
+        if labels and i < len(labels) and labels[i]:
+            label = labels[i]
+            font       = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness  = 1
+
+            (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+
+            # Fond coloré derrière le texte
+            pad = 4
+            ty = y1 - th - pad * 2  # position du fond
+            if ty < 0:              # si trop haut, passe sous la boîte
+                ty = y2 + pad
+
+            cv2.rectangle(img_copy,
+                          (x1, ty),
+                          (x1 + tw + pad * 2, ty + th + pad * 2),
+                          rgb, -1)  # rempli
+
+            # Texte en noir pour contraste
+            cv2.putText(img_copy, label,
+                        (x1 + pad, ty + th + pad),
+                        font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+
     return img_copy
