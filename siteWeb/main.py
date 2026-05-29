@@ -32,8 +32,8 @@ app = FastAPI()
 
 # MODELE
 model_mediapipe = load_model("blazeface_full",  False)
-model_arcface = load_model("arcface",  True)
-model_yolo = load_model("yolo",True)
+model_arcface = load_model("arcface",  False)
+model_yolo = load_model("yolo",False)
 
 
 
