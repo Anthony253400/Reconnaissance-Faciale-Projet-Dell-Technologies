@@ -11,5 +11,11 @@ __pycache__/
 *sid*
 *flo*
 *ka*
+<<<<<<< HEAD
 images/evaluation_set/
 images/evaluation_crop/
+=======
+images/
+
+
+>>>>>>> a41ef10 (remove images from tracking, add to gitignore)
