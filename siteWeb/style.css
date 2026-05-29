@@ -315,7 +315,7 @@ body {
 
 .btn-capture:hover {
   background: #fff;
-  transform: scale(1.07);
+  transform: scale(1.04);
 }
 
 .btn-capture:active {
@@ -592,6 +592,12 @@ body {
   text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 1rem;
+}
+
+.steps-list li strong {
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
 }
 
 .home-section {

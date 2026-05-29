@@ -30,14 +30,55 @@ startWebcam();
 
 
 /**
- * RECORDING AND FRAME CAPTURE
- * when the user clicks the record button, starts capturing frames from the webcam at regular intervals (INTERVAL_MS) until TARGET_FRAMES is reached
- * the captured frames are stored in the capturedPhotos array as File objects (with name frame_0.jpg, frame_1.jpg, etc.)
- * during capture, the progress is displayed as text and visually with a circular progress ring around the record button
- * once done, the user can click "add to database" to send the captured photos to the server
+ * COUNTDOWN
+ * displays a 3-2-1 countdown overlay on the webcam feed before recording starts.
+ * the numbers appear centered on the video, large and visible.
+ * the last number (1) is displayed in green to signal the imminent start.
+ * once the countdown ends, the overlay is hidden and beginCapture() is called.
  */
 function startRecording() {
     if (recording) return;
+
+    const overlay = document.getElementById('countdown-overlay');
+    const numEl   = document.getElementById('countdown-num');
+    numEl.style.background = 'none';
+    numEl.style.border = 'none';
+    numEl.style.color = 'white';
+    numEl.style.padding = '0';
+    numEl.style.borderRadius = '0';
+    numEl.style.fontSize = '120px';
+    const nums = [3, 2, 1];
+    let i = 0;
+
+    overlay.style.display = 'flex';
+    document.getElementById('countdown-msg').style.display = 'none';
+    document.getElementById('countdown-num').style.display = 'block';
+
+    function tick() {
+        numEl.textContent = nums[i];
+        numEl.style.color = 'rgba(0,118,206,0.5)';
+        i++;
+        if (i < nums.length) {
+            setTimeout(tick, 900);
+        } else {
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                beginCapture(overlay, numEl);
+            }, 900);
+        }
+    }
+    tick();
+}
+
+/**
+ * FRAME CAPTURE
+ * called automatically by startRecording() once the countdown is complete.
+ * captures frames from the webcam at regular intervals (INTERVAL_MS) until TARGET_FRAMES is reached.
+ * each frame is stored in the capturedPhotos array as a JPEG File object (frame_0.jpg, frame_1.jpg, ...).
+ * during capture, the progress is displayed as text and visually with the circular ring around the record button.
+ * once done, the button is re-enabled and the user is prompted to fill in the name and submit.
+ */
+function beginCapture(overlay, numEl) {
     capturedPhotos = [];
     recording = true;
     document.getElementById('btn-record').disabled = true;
@@ -64,8 +105,13 @@ function startRecording() {
                 clearInterval(recordingInterval);
                 recording = false;
                 document.getElementById('btn-record').disabled = false;
-                document.getElementById('progress').textContent = `Done! You can now add to database!`;
-            }
+                document.getElementById('progress').textContent = '';
+
+            document.getElementById('countdown-num').style.display = 'none';
+            const msg = document.getElementById('countdown-msg');
+            msg.textContent = 'Done! Click "Add to database" below.';
+            msg.style.display = 'inline';
+            overlay.style.display = 'flex';            }
         }, 'image/jpeg');
     }, INTERVAL_MS);
 }
@@ -141,7 +187,6 @@ async function addPerson() {
             fill.style.background = '#16a34a';
             setTimeout(() => {
                 bar.remove();
-                testBtn.remove();
             }, 2000);
 
             capturedPhotos = [];

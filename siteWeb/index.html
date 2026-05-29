@@ -11,7 +11,20 @@
     .btn-capture-wrap { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
 .capture-ring { position: absolute; top: 0; left: 0; width: 72px; height: 72px; transform: rotate(-90deg); pointer-events: none; }
 .capture-ring-bg { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 3; }
-.capture-ring-prog { fill: none; stroke: #0076CE; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 201.06; stroke-dashoffset: 201.06; transition: stroke-dashoffset 0.12s linear; }
+.capture-ring-prog { fill: none; stroke: #0076CE; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 201.06; stroke-dashoffset: 201.06; transition: stroke-dashoffset 0.12s linear; }
+.steps-list li strong {
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
+}
+
+#countdown-num {
+    background: rgba(0, 118, 206, 0.5);
+    border: 2px solid rgba(147, 197, 253, 0.8);
+    color: #bfdbfe;
+    padding: 10px 28px;
+    border-radius: 999px;
+}
 </style>
 
 <nav class="navbar">
@@ -36,11 +49,11 @@
     <div class="section-card">
         <h2>How to use</h2>
         <ol class="steps-list">
-            <li><strong>Choose a method</strong>we highly recommend using the webcam for better recognition accuracy. Upload from your device is available as an alternative.</li>
+            <li><strong>Choose a method:</strong> we highly recommend using the webcam for better recognition accuracy. Upload from your device is available as an alternative.</li>
             <li><strong>Webcam:</strong> press the button and slowly move your head left, right, up and down. Keep your face centered and well lit.</li>
             <li><strong>Upload:</strong> select a clear, front-facing photo with good lighting. Recognition may be less accurate.</li>
-            <li><strong>Fill in the name</strong> enter the first and last name of the person to register.</li>
-            <li><strong>Accept the privacy policy</strong> and click "Add to database". Then go to Detect to test recognition.</li>
+            <li><strong>Fill in the name:</strong> enter the first and last name of the person to register.</li>
+            <li><strong>Accept the privacy policy</strong>and click "Add to database". Then go to Detect to test recognition.</li>
         </ol>
     </div>
 
@@ -65,8 +78,12 @@
                 <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
                 <div class="cam-overlay">
                     <div class="cam-overlay-top">
-                        <p class="cam-instruction-overlay">Press the button below, start recording and move your head slowly in all directions</p>
+                        <p class="cam-instruction-overlay">Press the button below, start recording and move your head in all directions</p>
                         <p class="cam-step-overlay" id="progress"></p>
+                    </div>
+                    <div id="countdown-overlay" style="display:none; position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none;">
+                        <span id="countdown-num" style="font-size:120px; font-weight:500; color:white; line-height:1;"></span>
+                        <span id="countdown-msg" style="display:none; background:rgba(0,118,206,0.5); border:2px solid rgba(147,197,253,0.8); color:#bfdbfe; font-size:16px; font-weight:500; padding:10px 28px; border-radius:999px;"></span>
                     </div>
                     <div class="cam-overlay-bottom">
                         <div class="btn-capture-wrap">
