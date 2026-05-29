@@ -18,7 +18,7 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
                     "CPUExecutionProvider",
                 ]
             )
-            print("[ModelLoader] ArcFace chargé sur GPU ✅")
+            print("[ModelLoader] ArcFace chargé sur GPU")
             return session
         except Exception as e:
             print(f"[ModelLoader] ArcFace GPU échoué ({e}), fallback CPU")
@@ -26,7 +26,7 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
         session = ort.InferenceSession(
         model_path,
         providers=["CPUExecutionProvider"])
-        print("[ModelLoader] ArcFace chargé sur CPU ✅")
+        print("[ModelLoader] ArcFace chargé sur CPU")
         return session
 
 
@@ -52,9 +52,9 @@ def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = Tru
            
             # Vérification vitale : ONNX a-t-il vraiment pris le GPU ?
             if session.get_providers()[0] != 'CUDAExecutionProvider':
-                print("[ModelLoader] ⚠️ CUDA ignoré, ONNX a basculé silencieusement sur CPU.")
+                print("[ModelLoader]  CUDA ignoré, ONNX a basculé silencieusement sur CPU.")
             else:
-                print("[ModelLoader] YOLOv8 chargé sur GPU (ONNX) ✅")
+                print("[ModelLoader] YOLOv8 chargé sur GPU (ONNX)")
                
             # On retourne 'onnx' au lieu de 'ultralytics' car c'est une session ort
             return ('onnx', session)
@@ -62,9 +62,6 @@ def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = Tru
         except Exception as e:
             print(f"[ModelLoader] YOLOv8 GPU échoué ({e}), fallback vers CPU OpenCV")
 
-
-    # --- Bloc CPU (OpenCV) ---
-    print("[ModelLoader] Initialisation de YOLOv8 via OpenCV...")
     net = cv2.dnn.readNetFromONNX(model_path)
    
     if processeur_intel:
@@ -75,12 +72,8 @@ def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = Tru
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
        
-    print("[ModelLoader] YOLOv8 chargé sur CPU (OpenCV) ✅")
+    print("[ModelLoader] YOLOv8 chargé sur CPU (OpenCV) ")
     return ('opencv', net)
-
-
-
-
 
 
 def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use_gpu: bool = CUDA_AVAILABLE):
@@ -102,7 +95,7 @@ def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use
     base_options = python.BaseOptions(model_asset_path=model_path)
     options      = vision.FaceDetectorOptions(base_options=base_options)
     detector     = vision.FaceDetector.create_from_options(options)
-    print("[ModelLoader] BlazeFace chargé sur CPU ✅")
+    print("[ModelLoader] BlazeFace chargé sur CPU ")
     return detector
 
 

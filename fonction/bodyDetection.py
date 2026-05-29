@@ -68,7 +68,7 @@ def BodyDetect_from_frame(img, model):
     t_start = time.perf_counter()
 
 
-    backend, session = model  # ← déstructure le tuple
+    backend, session = model
     h, w, _ = img.shape
 
 
