@@ -33,7 +33,7 @@ app = FastAPI()
 
 
 # MODELE
-model_mediapipe = load_model("blazeface_full",  False)
+model_mediapipe = load_model("blazeface_short",  False)
 model_arcface = load_model("arcface",  True)
 #model_yolo = load_model("yolo",False)
 
@@ -165,15 +165,15 @@ class CameraStream:
                
                 # Affichage dans le terminal séparé par des ';'
                 print(
-                    f"Total:{t_total:.1f}ms;"
-                    f"Decodage:{t_decode:.1f}ms;"
-                    f"ConvColor:{t_cv_color:.1f}ms;"
-                    f"InferFace:{t_infer_face:.1f}ms;"
-                    f"DetFaceTotal:{t_detection_face_total:.1f}ms;"
-                    f"DetBody:{t_detection_body:.1f}ms;"
-                    f"Alignement:{t_alignement:.1f}ms;"
-                    f"Embedding:{t_embedding:.1f}ms;"
-                    f"Recherche:{t_recherche:.1f}ms;"
+                    f"Total:{t_total:.1f}ms | "
+                    f"Decodage:{t_decode:.1f}ms | "
+                    f"ConvColor:{t_cv_color:.1f}ms | "
+                    f"InferFace:{t_infer_face:.1f}ms | "
+                    f"DetFaceTotal:{t_detection_face_total:.1f}ms | "
+                    f"DetBody:{t_detection_body:.1f}ms | "
+                    f"Alignement:{t_alignement:.1f}ms | "
+                    f"Embedding:{t_embedding:.1f}ms | "
+                    f"Recherche:{t_recherche:.1f}ms | "
                     f"DessinEnc:{t_formatage_final:.1f}ms"
                 )
 
