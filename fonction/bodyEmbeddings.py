@@ -54,8 +54,8 @@ def get_body_embedding(crop_bgr):
 
 if __name__ == "__main__":
     import cv2
-    from bodyDetection import BodyDetect_from_bytes
-    from bodyAlignment import body_crop
+    from fonction.bodyDetection import BodyDetect_from_bytes
+    from fonction.bodyAlignment import body_crop
 
     net = cv2.dnn.readNetFromONNX("model/yolov8n.onnx")
 

@@ -4,9 +4,10 @@ qdrant_data/
 __pycache__/
 *.py[cod]
 
-qdrant_db.py
 
 *anthony*
 *lea*
-
-images/evaluation_set/
+*clem*
+*sid*
+*flo*
+*ka*

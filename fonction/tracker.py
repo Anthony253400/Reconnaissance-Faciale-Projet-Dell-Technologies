@@ -140,7 +140,7 @@ class BodyTracker:
         Returns:
             list: Name assigned to each body box (same order as body_boxes).
         """
-        from bodyEmbeddings import get_body_embedding
+        from fonction.bodyEmbeddings import get_body_embedding
 
         result_names = [""] * len(body_boxes)
         confirmed_body_indices = set()

@@ -5,7 +5,6 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
 import cv2
-from DrawBox import DrawBox
 
 
 def FacesDetects_mtcnn(url_img : str ):
@@ -81,7 +80,7 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
     else:
         image_bgr = image_bytes
     
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    image_rgb = image_bytes
     
     box = []
     if method == "mtcnn":
