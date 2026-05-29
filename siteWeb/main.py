@@ -34,8 +34,8 @@ app = FastAPI()
 
 # MODELE
 model_mediapipe = load_model("blazeface_full",  False)
-model_arcface = load_model("arcface",  False)
-model_yolo = load_model("yolo",False)
+model_arcface = load_model("arcface",  True)
+#model_yolo = load_model("yolo",False)
 
 
 app.add_middleware(
@@ -121,7 +121,7 @@ class CameraStream:
 
                 # Body Detection
                 t0 = time.perf_counter()
-                boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
+                #boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
 
@@ -152,7 +152,7 @@ class CameraStream:
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
+                #image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
 
