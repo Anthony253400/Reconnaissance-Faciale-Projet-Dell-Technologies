@@ -20,9 +20,9 @@ from  mtcnn.utils.images  import  load_image
 
 
 from fonction.loadModel import load_model
-from fonction.detecVisage import FacesDetects_from_bytes
+from fonction.faceDetection import FacesDetects_from_bytes
 from fonction.faceAlignment import align_crop
-from fonction.embeddings import get_embedding
+from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
