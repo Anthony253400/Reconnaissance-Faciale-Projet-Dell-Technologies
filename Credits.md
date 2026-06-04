@@ -43,6 +43,5 @@ This document lists the third-party libraries, machine learning models, and open
 
 ---
 
-**Note on model files:** In accordance with version control best practices and distribution license compliance, the model weight files (`.pt`, `.onnx`, `.tflite`, `.pth`) are not included in this source repository. They must be downloaded from their respective official sources to run the project locally.
 
 
