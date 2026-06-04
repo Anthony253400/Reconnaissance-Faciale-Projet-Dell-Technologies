@@ -59,11 +59,11 @@ def FacesDetects_mediapipe(url_img : str , model_path='model/blaze_face_short_ra
                 ])
         return box , detection_result , image
     
-def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
+def FacesDetects_from_frame(image, method : str , detector):
     """
     Detects faces from bytes by choosing the method.
     Args:
-        image_bytes : Raw image data.
+        image (numpy.ndarray): The input image in RGB format.
         methode (str): Method for detecting faces: mtcnn , mediapipe.
         detector: Required for MediaPipe. Pre-initialized template instance
 
@@ -74,23 +74,15 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
             - image (numpy.ndarray): The loaded image data in RGB format.
     
     """ 
-    if numpy == False : 
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    else:
-        image_bgr = image_bytes
-    
-    image_rgb = image_bytes
-    
     box = []
     if method == "mtcnn":
         detector = MTCNN(device="CPU:0")
-        result = detector.detect_faces(image_rgb)
+        result = detector.detect_faces(image)
         box = [[f['box'][0], f['box'][1], f['box'][0] + f['box'][2], f['box'][1] + f['box'][3]] for f in result]
-        return box, result, image_rgb
+        return box, result, image
 
     elif method == "mediapipe":
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
             detection_result = detector.detect(mp_image)
             
             if detection_result.detections:
@@ -102,7 +94,7 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
                         bbox.origin_x + bbox.width, 
                         bbox.origin_y + bbox.height
                     ])
-            return box, detection_result, image_rgb
+            return box, detection_result, image
     else:
         return None, None, None
 

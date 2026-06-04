@@ -9,19 +9,20 @@ import numpy as np
 
 def align_crop(image, listFace, method):
     """
-    aligns and cuts out the face
+    aligns and cuts out the face.
     Args:
-        image_bytes : Raw image data
+        image (numpy.ndarray): The input image in RGB format.
         listFace (list): The raw object returned by MediaPipe library. Containing the native detection data, bounding boxes, and scores.
-
 
     Returns:
         tuple:
-            - face_final_bgr (numpy.ndarray): face align and crop.
+            - face_final (numpy.ndarray): face align and crop in format RGB.
     """
     im_height, im_width = image.shape[:2]
     crops = []
     if method == "mtcnn":
+        """Warning Not Functional"""
+        print("Warning : method ='mtcnn' in align_crop(... , method) is break")
         for face in result:
             kp = face['keypoints']
             left_eye  = kp['left_eye']
@@ -90,8 +91,7 @@ def align_crop(image, listFace, method):
             # Redimensionnement et conversion pour ArcFace
             if face_final.size > 0:
                 face_final = cv2.resize(face_final, (112, 112))
-                face_final_bgr = cv2.cvtColor(face_final, cv2.COLOR_RGB2BGR)
-                crops.append(face_final_bgr)
+                crops.append(face_final)
 
 
     return crops

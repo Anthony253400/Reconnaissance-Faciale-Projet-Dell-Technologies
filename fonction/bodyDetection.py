@@ -64,25 +64,36 @@ def BodyDetect(url_img : str , detector ):
 
 
 
-def BodyDetect_from_frame(img, model):
+def BodyDetect_from_frame(image, model):
+    """
+    Detects body from frame.
+    Args:
+        image (numpy.ndarray): The input image in RGB format.
+        model : Required for Yolo. Pre-initialized template instance
+    
+    Returns: 
+        tuple: 
+            - boxes (list): A list of lists in the format [x1, y1, x2, y2] (bounding boxes). 
+            - final_confidences (list): Float confidences associated with each detection. 
+    
+    """ 
     t_start = time.perf_counter()
 
-
     backend, session = model
-    h, w, _ = img.shape
+    print("-------------------------------")
+    print(backend)
+    print("-------------------------------")
 
+    h, w, _ = image.shape
 
-    # 1. Préparation du blob (même pour les deux backends)
-    img_resized = cv2.resize(img, (320, 320))
+    img_resized = cv2.resize(image, (320, 320))
     blob = img_resized.astype(np.float32) / 255.0       # [0,1]
-    blob = blob[..., ::-1]                               # BGR → RGB
     blob = np.transpose(blob, (2, 0, 1))                 # HWC → CHW
     blob = np.expand_dims(blob, axis=0)                  # CHW → NCHW
-    t_blob = time.perf_counter()
-    #print(f"[Timer] 1. Blob : {(t_blob - t_start)*1000:.2f} ms")
+    #t_blob = time.perf_counter()
 
 
-    # 2. Inférence selon le backend
+    # inference
     if backend == 'onnx':
         input_name = session.get_inputs()[0].name
         outputs = session.run(None, {input_name: blob})
@@ -90,24 +101,22 @@ def BodyDetect_from_frame(img, model):
 
 
     elif backend == 'opencv':
-        blob_cv = cv2.dnn.blobFromImage(img, 1/255.0, (640, 640), swapRB=True, crop=False)
+        """Warning Not Functional"""
+        print("Warning : backend in BodyDetect_from_frame(... , model)")
+
+        blob_cv = cv2.dnn.blobFromImage(image, 1/255.0, (640, 640), swapRB=True, crop=False)
         session.setInput(blob_cv)
         outputs = session.forward()
         predictions = np.squeeze(outputs[0]).T
-
-
     t_infer = time.perf_counter()
-    #print(f"[Timer] 2. Inférence : {(t_infer - t_blob)*1000:.2f} ms")
 
-
-    # 3. Filtrage des détections
     box = []
     confidences = []
     for row in predictions:
         score = row[4:].max()
         if score > 0.5:
             class_id = row[4:].argmax()
-            if class_id == 0:  # personne uniquement
+            if class_id == 0:  # body people
                 cx, cy, rw, rh = row[0:4]
                 x1 = int((cx - rw/2) * (w / 640))
                 y1 = int((cy - rh/2) * (h / 640))
@@ -116,10 +125,7 @@ def BodyDetect_from_frame(img, model):
                 box.append([x1*2, y1*2, bw*2, bh*2])
                 confidences.append(float(score))
 
-
-    # 4. NMS
     indices = cv2.dnn.NMSBoxes(box, confidences, score_threshold=0.5, nms_threshold=0.4)
-
 
     boxes = []
     final_confidences = []

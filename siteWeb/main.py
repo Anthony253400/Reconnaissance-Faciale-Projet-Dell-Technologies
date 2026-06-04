@@ -20,7 +20,7 @@ from  mtcnn.utils.images  import  load_image
 
 
 from fonction.loadModel import load_model
-from fonction.faceDetection import FacesDetects_from_bytes
+from fonction.faceDetection import FacesDetects_from_frame
 from fonction.faceAlignment import align_crop
 from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
@@ -53,12 +53,8 @@ class CameraStream:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.cap.set(cv2.CAP_PROP_FPS,30)
 
-
         print(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         print(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-
-
 
         self.lock_raw = threading.Lock()
         self.lock_out = threading.Lock()
@@ -79,20 +75,15 @@ class CameraStream:
     def _capture_loop(self):
         """Lit la caméra aussi vite que possible — aucune IA ici"""
         while self.running:
-            t0 = time.perf_counter()
+            #t0 = time.perf_counter()
             ok, frame = self.cap.read()
-            t_capture = (time.perf_counter() - t0) * 1000
-
-
+            #t_capture = (time.perf_counter() - t0) * 1000
             if not ok:
                 continue
-
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
             with self.lock_raw:
                 self.raw_frame = frame
-
-
-            #print(f"[CAPTURE] Cap: {t_capture:.1f}ms")
 
 
     def _ai_loop(self):
@@ -107,15 +98,10 @@ class CameraStream:
                 continue
 
 
-            try:
-                # Initialisation des variables de temps
-                t_decode, t_cv_color, t_infer_face = 0, 0, 0
-                t_alignement, t_embedding, t_recherche = 0, 0, 0
-               
+            try:               
                 # Face Detection
                 t0 = time.perf_counter()
-                boxes_face, result, image_rgb = FacesDetects_from_bytes(
-                    frame, "mediapipe", model_mediapipe , numpy=True)
+                boxes_face, result, image_rgb = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
                 t_detection_face_total = (time.perf_counter() - t0) * 1000
 
 
@@ -129,7 +115,7 @@ class CameraStream:
                 if result and result.detections:
                     # Alignment
                     t0 = time.perf_counter()
-                    crops = align_crop(image_rgb, result , "mediapipe")
+                    crops = align_crop(frame, result , "mediapipe")
                     t_alignement = (time.perf_counter() - t0) * 1000
 
 
@@ -222,7 +208,7 @@ async def add_person(
 
     # Détection
     t0 = time.perf_counter()
-    boxes_face, result, image = FacesDetects_from_bytes(contents, "mediapipe", model_mediapipe)
+    boxes_face, result, image = FacesDetects_from_frame(contents, "mediapipe", model_mediapipe)
     print(f"[/add] Détection : {(time.perf_counter() - t0) * 1000:.1f} ms")
 
 
