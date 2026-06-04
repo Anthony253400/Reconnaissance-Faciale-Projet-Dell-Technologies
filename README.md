@@ -1,6 +1,7 @@
 # Reconnaissance Faciale Projet Dell Technologies
 
 >Internship project 2026 - Léa Carminati & Anthony Miranda
+
 >Dell Technologies Montpellier
 
 This project consists of the design and deployment of an AI inference chain for facial recognition of a video stream in real time. The application integrates face detection, embedding extraction, and vector indexing to compare them with a set of reference photos provided by the user. A web interface allows managing the upload of the database, visualizing the live camera stream, and displaying the predicted identity. 
