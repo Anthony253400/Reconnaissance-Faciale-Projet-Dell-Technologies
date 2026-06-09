@@ -17,6 +17,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from mtcnn import MTCNN
 from  mtcnn.utils.images  import  load_image
+from typing import List
+
 
 
 from fonction.loadModel import load_model
@@ -26,11 +28,12 @@ from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
-
+from statistics_route import register_statistics_routes
 
 
 app = FastAPI()
 
+register_statistics_routes(app) 
 
 # MODELE
 model_mediapipe = load_model("blazeface_short",  False)
@@ -213,58 +216,43 @@ def get_frame():
 async def add_person(
     firstName: str = Form(...),
     lastName:  str = Form(...),
-    photo:     UploadFile = File(...)
+    photos:    List[UploadFile] = File(...)   # <-- era "photo" singolo
 ):
-    print(f"\n--- DEBUT AJOUT PERSONNE : {firstName} {lastName} ---")
+    print(f"\n start adding : {firstName} {lastName} | {len(photos)} frame ---")
     t_start = time.perf_counter()
-    contents = await photo.read()
 
+    saved = 0
+    name = f"{firstName} {lastName}".strip().lower()
 
-    # Détection
-    t0 = time.perf_counter()
-    boxes_face, result, image = FacesDetects_from_bytes(contents, "mediapipe", model_mediapipe)
-    print(f"[/add] Détection : {(time.perf_counter() - t0) * 1000:.1f} ms")
+    for i, photo in enumerate(photos):
+        contents = await photo.read()
 
+        try:
+            boxes_face, result, image = FacesDetects_from_bytes(
+                contents, "mediapipe", model_mediapipe)
 
-    # Alignement
-    t0 = time.perf_counter()
-    crops = align_crop(image, result)
-    print(f"[/add] Alignement : {(time.perf_counter() - t0) * 1000:.1f} ms")
+            if not result or not result.detections:
+                continue
 
+            crops = align_crop(image, result, "mediapipe")
+            if not crops:
+                continue
 
-    """
-    await websocket.accept()
-    meta = await websocket.receive_json()
-    firstName = meta["firstName"]
-    lastName  = meta["lastName"]
-    create_collection()
-"""
+            embedding = get_embedding(crops[0], model_arcface)
+            save_embedding(name, embedding)
+            saved += 1
 
-    for face_cropped in crops:
-        # Embedding
-        t0 = time.perf_counter()
-        embedding = get_embedding(face_cropped, model_arcface)
-        print(f"[/add] Embedding : {(time.perf_counter() - t0) * 1000:.1f} ms")
+        except Exception as e:
+            print(f"[/add] skipped {i} frame: {e}")
+            continue
 
+    if saved == 0:
+        return Response(status_code=422, content="No valid frames found.")
 
-        # Sauvegarde
-        t0 = time.perf_counter()
-        save_embedding(f"{firstName} {lastName}".strip().lower(), embedding)
-        print(f"[/add] Sauvegarde BDD : {(time.perf_counter() - t0) * 1000:.1f} ms")
+    print(f"[/add] {saved}/{len(photos)} saved embedding  | "
+          f"total time: {(time.perf_counter() - t_start) * 1000:.1f} ms")
 
-
-    # Retourne la photo uploadée avec les boîtes dessinées
-    t0 = time.perf_counter()
-    image_boxed = DrawBox(image, boxes_face, 'green')
-    bgr = cv2.cvtColor(image_boxed, cv2.COLOR_RGB2BGR)
-    _, buf = cv2.imencode('.jpg', bgr)
-    print(f"[/add] Dessin & Formatage final : {(time.perf_counter() - t0) * 1000:.1f} ms")
-    print(f"--- FIN AJOUT PERSONNE (Temps total : {(time.perf_counter() - t_start) * 1000:.1f} ms) ---\n")
-
-
-    return StreamingResponse(io.BytesIO(buf.tobytes()), media_type="image/jpeg")
-
-
+    return {"status": "ok", "frames_used": saved, "total_frames": len(photos)}    
 
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")

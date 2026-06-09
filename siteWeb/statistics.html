@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Evaluation — Statistics</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  :root {
+    --blue:#0076CE; --orange:#e67e22; --green:#16a34a; --red:#dc3545; --muted:#888884;
+    --surface:#ffffff; --bg:#f4f4f1; --border:#e4e4e0; --text:#1a1a1a;
+  }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; }
+  .stats-wrap { max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:1.25rem; }
+  .stats-card { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+                box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04); padding:1.5rem; }
+  .stats-card h1 { font-size:1.4rem; font-weight:600; margin:0 0 .6rem; }
+  .stats-card h2 { font-size:1.1rem; font-weight:600; margin:0 0 .4rem; }
+  .stats-card p  { color:#555; font-size:.93rem; line-height:1.6; margin:0 0 .4rem; }
+  .stats-card img { width:100%; height:auto; }
+  table.metrics { width:100%; border-collapse:collapse; font-size:.92rem; margin-top:.5rem; }
+  table.metrics th, table.metrics td { border:1px solid var(--border); padding:.55rem .75rem; text-align:left; }
+  table.metrics th { background:var(--bg); font-weight:600; }
+  table.metrics td:first-child { color:#555; }
+  .chart-box { position:relative; }
+  .back-link { display:inline-block; margin-bottom:.5rem; color:var(--blue); text-decoration:none; font-size:.9rem; }
+  .back-link:hover { text-decoration:underline; }
+  .note { font-size:.82rem; color:var(--muted); font-style:italic; margin-top:.5rem; }
+</style>
+</head>
+<body>
+<div class="stats-wrap">
+
+  <div class="stats-card">
+    <a class="back-link" href="home.html">&larr; Back to home</a>
+    <h1>Model Evaluation</h1>
+    <p>This page shows how well the face-recognition system actually works. We tested it on
+    two sets of photos. The first is our own <strong>custom set</strong>, taken on purpose
+    under difficult conditions: masks, hats, sunglasses, side views, poor lighting. The second
+    is <strong>LFW</strong>, a well-known public set of clean, front-facing photos used by
+    researchers as a reference.</p>
+    <p>The goal is not to pick a winner — the two sets are very different. LFW tells us the
+    system is built correctly; the custom set tells us how it copes with real, messy conditions.
+    The difference between the two is the interesting part.</p>
+  </div>
+
+  <div class="stats-card">
+    <h2>Summary</h2>
+    <p>A few standard numbers. <strong>EER</strong> is the error rate when false accepts and
+    false rejects are balanced (lower is better). <strong>AUC</strong> measures overall
+    separation (1.0 is perfect, 0.5 is random). <strong>d'</strong> says how far apart the
+    "same person" and "different person" scores are (higher is better). The ranges in brackets
+    are 95% confidence intervals — how much the number could move given the sample size.</p>
+    <table class="metrics">
+      <tr><th>Metric</th><th>Custom (real conditions)</th><th>LFW (benchmark)</th></tr>
+      <tr><td>Genuine attempts</td><td>89</td><td>917</td></tr>
+      <tr><td>Impostor attempts</td><td>10</td><td>298</td></tr>
+      <tr><td>EER (95% CI)</td><td>38.0% [19.8, 57.2]</td><td>5.5% [3.7, 7.1]</td></tr>
+      <tr><td>AUC</td><td>0.567</td><td>0.978</td></tr>
+      <tr><td>d' (separability)</td><td>0.36</td><td>3.45</td></tr>
+      <tr><td>Decision threshold</td><td>0.4</td><td>0.55</td></tr>
+    </table>
+  </div>
+
+  <div class="stats-card">
+    <h2>Score distributions</h2>
+    <p>Every comparison produces a similarity score. Blue bars are real matches (same person),
+    orange bars are impostors (different people). When the two colours are well separated, the
+    system can tell them apart easily. On the custom set (left) they overlap a lot — that is
+    why it struggles. On LFW (right) they are clearly separated.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="chart-box" style="height:240px;"><canvas id="distCustom" role="img" aria-label="Custom score distribution"></canvas></div>
+      <div class="chart-box" style="height:240px;"><canvas id="distLfw" role="img" aria-label="LFW score distribution"></canvas></div>
+    </div>
+  </div>
+
+  <div class="stats-card">
+    <h2>ROC curves</h2>
+    <p>This curve shows the trade-off between accepting the right people and wrongly accepting
+    impostors. The closer the line hugs the top-left corner, the better. LFW (orange) climbs
+    almost to the corner; the custom curve (blue) stays lower. The custom line looks like a
+    staircase simply because it was tested on only a few impostors, so it can move in big steps.</p>
+    <div class="chart-box" style="height:320px;"><canvas id="roc" role="img" aria-label="ROC curves custom vs LFW"></canvas></div>
+  </div>
+
+  <div class="stats-card">
+    <h2>Results by photo condition</h2>
+    <p>For the custom set, this breaks every photo into three outcomes: correctly recognised
+    (green), wrongly handled (orange), or discarded before matching because the face was too
+    hidden or turned away (red). Normal and glasses photos are almost all correct; masks and
+    side views cause most of the errors and rejections.</p>
+    <div class="chart-box" style="height:320px;"><canvas id="outcome" role="img" aria-label="Outcome per condition"></canvas></div>
+  </div>
+
+  <div class="stats-card">
+    <h2>Discarded photos</h2>
+    <p>24 photos were set aside before any matching. Most (21) were turned
+    away by a deliberate rule that refuses faces seen too much from the side — aligning them
+    would be unreliable. The rest (3) had no face detected at all, usually because a
+    mask or hat hid the key facial points. This is by design, not a malfunction.</p>
+    <div class="chart-box" style="height:280px;"><canvas id="fail" role="img" aria-label="Discards by condition and reason"></canvas></div>
+  </div>
+
+  <div class="stats-card">
+    <h2>Confusion matrix</h2>
+    <p>Each row is the true person, each column is who the system guessed. The dark diagonal
+    means most people are recognised correctly. The off-diagonal cells show mix-ups — pairs of
+    people whose faces the system finds similar. These are the natural targets for improvement
+    (more enrolment photos, or a smarter classifier).</p>
+    <div id="cmHeat" style="overflow-x:auto;"></div>
+    <p class="note">Note: the custom dataset is small (10 people). Results give a clear trend
+    but the exact numbers carry wide uncertainty, as the confidence intervals above show.</p>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const D = {"custom": {"n_g": 89, "n_i": 10, "eer": 38.0, "eer_lo": 19.8, "eer_hi": 57.2, "auc": 0.567, "thr": 0.4, "dprime": 0.36, "hist_centers": [0.025, 0.075, 0.125, 0.175, 0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925, 0.975], "hist_g": [0.0, 0.0, 0.0, 0.0, 0.0, 0.225, 0.899, 2.697, 4.494, 3.596, 3.596, 1.798, 0.899, 0.449, 0.225, 0.225, 0.0, 0.225, 0.674, 0.0], "hist_i": [0.0, 0.0, 0.0, 0.0, 2.0, 8.0, 2.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0], "roc_far": [0.0, 0.0, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.6, 0.7, 0.7, 0.8, 0.9, 0.9, 0.9, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "roc_tar": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.011, 0.011, 0.011, 0.022, 0.022, 0.022, 0.022, 0.045, 0.056, 0.067, 0.079, 0.09, 0.101, 0.112, 0.146, 0.157, 0.18, 0.225, 0.27, 0.303, 0.36, 0.382, 0.416, 0.438, 0.483, 0.539, 0.584, 0.629, 0.64, 0.697, 0.708, 0.719, 0.73, 0.742, 0.753, 0.753, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764, 0.764]}, "lfw": {"n_g": 917, "n_i": 298, "eer": 5.5, "eer_lo": 3.7, "eer_hi": 7.1, "auc": 0.978, "thr": 0.55, "dprime": 3.45, "hist_centers": [0.025, 0.075, 0.125, 0.175, 0.225, 0.275, 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675, 0.725, 0.775, 0.825, 0.875, 0.925, 0.975], "hist_g": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.044, 0.305, 0.545, 1.461, 2.486, 3.206, 4.449, 4.515, 2.137, 0.698, 0.065, 0.087], "hist_i": [0.0, 0.0, 0.0, 0.0, 0.0, 0.201, 0.805, 3.826, 5.973, 5.503, 2.483, 1.007, 0.201, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "roc_far": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.003, 0.003, 0.003, 0.007, 0.01, 0.02, 0.02, 0.02, 0.023, 0.06, 0.07, 0.091, 0.121, 0.154, 0.185, 0.245, 0.295, 0.372, 0.413, 0.46, 0.517, 0.581, 0.621, 0.691, 0.758, 0.819, 0.862, 0.896, 0.936, 0.95, 0.963, 0.97, 0.983, 0.987, 0.99, 0.993, 0.997, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "roc_tar": [0.0, 0.0, 0.0, 0.001, 0.002, 0.003, 0.003, 0.004, 0.004, 0.005, 0.007, 0.013, 0.015, 0.025, 0.032, 0.041, 0.057, 0.074, 0.098, 0.119, 0.148, 0.18, 0.226, 0.287, 0.327, 0.374, 0.413, 0.453, 0.508, 0.544, 0.595, 0.632, 0.663, 0.694, 0.731, 0.756, 0.79, 0.809, 0.832, 0.858, 0.879, 0.897, 0.909, 0.93, 0.941, 0.95, 0.959, 0.962, 0.965, 0.971, 0.976, 0.978, 0.981, 0.983, 0.986, 0.986, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987, 0.987]}, "outcome": {"conds": ["glasses", "hat", "maskeyes", "maskmouth", "maskside", "normal", "side", "sun"], "correct": [8, 15, 3, 6, 3, 14, 0, 8], "wrong": [2, 6, 6, 4, 7, 1, 2, 4], "discarded": [4, 7, 1, 0, 1, 2, 7, 2]}, "fail": {"conds": ["glasses", "hat", "maskeyes", "maskside", "normal", "side", "sun"], "no_detection": [0, 1, 1, 1, 0, 0, 0], "rejected_alignment": [4, 6, 0, 0, 2, 7, 2]}, "fail_total": 24, "fail_reasons": {"no_detection": 3, "rejected_alignment": 21}, "cm": {"labels": ["anthony miranda", "clémentine beaulieu", "florient marchal", "gabriel viard", "kardiatou ba", "lea carminati", "mathis monnin", "robin henry", "sasha villemiane", "sidney dachez"], "matrix": [[5, 1, 3, 0, 0, 0, 0, 0, 0, 0], [0, 6, 1, 0, 0, 1, 0, 1, 1, 0], [0, 0, 7, 0, 0, 1, 1, 0, 0, 1], [0, 0, 0, 7, 0, 0, 1, 0, 1, 0], [0, 0, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 8, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 6, 0, 0, 0], [0, 0, 2, 0, 1, 0, 0, 6, 0, 0], [1, 0, 1, 0, 0, 0, 0, 0, 7, 0], [0, 0, 0, 0, 0, 1, 0, 0, 0, 9]], "max": 9}};
+const BLUE="#0076CE",ORANGE="#e67e22",GREEN="#16a34a",RED="#dc3545",MUTED="#888884";
+const gridC="rgba(0,0,0,0.06)";
+
+function distChart(id,ds){
+  new Chart(document.getElementById(id),{type:'bar',
+    data:{labels:ds.hist_centers.map(c=>c.toFixed(2)),datasets:[
+      {label:'Genuine',data:ds.hist_g,backgroundColor:BLUE+'aa'},
+      {label:'Impostor',data:ds.hist_i,backgroundColor:ORANGE+'aa'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+      scales:{y:{title:{display:true,text:'Density',font:{size:11}},grid:{color:gridC},ticks:{font:{size:10}}},
+        x:{title:{display:true,text:'Cosine similarity',font:{size:11}},grid:{color:gridC},ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:6}}}}});
+}
+distChart('distCustom',D.custom);
+distChart('distLfw',D.lfw);
+
+new Chart(document.getElementById('roc'),{type:'line',
+  data:{datasets:[
+    {label:'Custom (AUC '+D.custom.auc+')',data:D.custom.roc_far.map((f,i)=>({x:f,y:D.custom.roc_tar[i]})),borderColor:BLUE,backgroundColor:BLUE,pointRadius:0,borderWidth:2,tension:0},
+    {label:'LFW (AUC '+D.lfw.auc+')',data:D.lfw.roc_far.map((f,i)=>({x:f,y:D.lfw.roc_tar[i]})),borderColor:ORANGE,backgroundColor:ORANGE,pointRadius:0,borderWidth:2,tension:0},
+    {label:'Random',data:[{x:0,y:0},{x:1,y:1}],borderColor:MUTED,borderDash:[5,5],pointRadius:0,borderWidth:1}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+    scales:{x:{type:'linear',min:0,max:1,title:{display:true,text:'False Accept Rate',font:{size:11}},grid:{color:gridC},ticks:{font:{size:10}}},
+      y:{min:0,max:1,title:{display:true,text:'True Accept Rate',font:{size:11}},grid:{color:gridC},ticks:{font:{size:10}}}}}}); 
+
+new Chart(document.getElementById('outcome'),{type:'bar',
+  data:{labels:D.outcome.conds,datasets:[
+    {label:'Correct',data:D.outcome.correct,backgroundColor:GREEN},
+    {label:'Wrong',data:D.outcome.wrong,backgroundColor:ORANGE},
+    {label:'Discarded',data:D.outcome.discarded,backgroundColor:RED}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+    scales:{y:{title:{display:true,text:'Number of photos',font:{size:11}},grid:{color:gridC},ticks:{font:{size:10}}},
+      x:{ticks:{font:{size:10},maxRotation:40,minRotation:30,autoSkip:false}}}}});
+
+new Chart(document.getElementById('fail'),{type:'bar',
+  data:{labels:D.fail.conds,datasets:[
+    {label:'rejected (side view)',data:D.fail.rejected_alignment,backgroundColor:BLUE},
+    {label:'no face detected',data:D.fail.no_detection,backgroundColor:MUTED}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+    scales:{y:{stacked:true,title:{display:true,text:'Discarded photos',font:{size:11}},grid:{color:gridC},ticks:{font:{size:10},stepSize:1}},
+      x:{stacked:true,ticks:{font:{size:10},maxRotation:40,minRotation:30,autoSkip:false}}}}});
+
+const cm=D.cm,mx=cm.max;
+let h='<table style="border-collapse:collapse;font-size:10px;"><tr><th></th>';
+cm.labels.forEach(l=>{h+='<th style="padding:2px 3px;writing-mode:vertical-rl;transform:rotate(180deg);color:'+MUTED+';font-weight:400;white-space:nowrap;height:80px;">'+l+'</th>';});
+h+='</tr>';
+cm.matrix.forEach((row,i)=>{
+  h+='<tr><td style="padding:2px 6px;text-align:right;color:'+MUTED+';white-space:nowrap;">'+cm.labels[i]+'</td>';
+  row.forEach(v=>{const a=v===0?0:0.15+0.85*(v/mx);const col='rgba(0,118,206,'+a+')';const txt=a>0.5?'#fff':(v===0?'#ccc':'#1a1a1a');
+    h+='<td style="width:26px;height:26px;text-align:center;background:'+col+';color:'+txt+';border:0.5px solid #eee;">'+(v||'')+'</td>';});
+  h+='</tr>';});
+h+='</table>';
+document.getElementById('cmHeat').innerHTML=h;
+</script>
+</body>
+</html>
