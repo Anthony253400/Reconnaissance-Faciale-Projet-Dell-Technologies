@@ -1,5 +1,11 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+import sys
+from fonction.bodyEmbeddings import get_body_embedding
+
+
+sys.path.append('../')
+
 
 # CONFIGURABLE PARAMETERS 
 REENTRY_EMBEDDING_THRESHOLD = 0.75  # minimum cosine similarity to recognise a returning person
@@ -140,7 +146,6 @@ class BodyTracker:
         Returns:
             list: Name assigned to each body box (same order as body_boxes).
         """
-        from fonction.bodyEmbeddings import get_body_embedding
 
         result_names = [""] * len(body_boxes)
         confirmed_body_indices = set()

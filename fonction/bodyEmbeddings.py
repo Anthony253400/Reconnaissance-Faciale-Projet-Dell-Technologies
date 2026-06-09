@@ -11,7 +11,7 @@ model = torchreid.models.build_model(
     num_classes=751,
     pretrained=False
 )
-weights_path = os.path.join(BASE_DIR, "model", "osnet_x0_25_market.pth")
+weights_path = os.path.join(BASE_DIR, "../model", "osnet_x0_25_market.pth")
 torchreid.utils.load_pretrained_weights(model, weights_path)
 model.eval()
 
