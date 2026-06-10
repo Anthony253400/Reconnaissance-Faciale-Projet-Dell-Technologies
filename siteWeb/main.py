@@ -113,12 +113,13 @@ class CameraStream:
                 boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
+                """
                 names = [""] * len(boxes_face)
                 clean_names = [""] * len(boxes_face)
                 if result and result.detections:
-                    crops = align_crop(frame, result)
+                    crops = align_crop(frame, result,"mediapipe")
                     for i, face_cropped in enumerate(crops):
-                        embedding = get_embedding(face_cropped)
+                        embedding = get_embedding(face_cropped,model_arcface)
                         name, score = search_embedding(embedding)
                         score_str = f"{score:.2f}" if score else "?"
                         names[i] = f"{name} ({score_str})"
@@ -128,7 +129,7 @@ class CameraStream:
 
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=name)
                 image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
-                """                
+                """
                 
                 labels = []
                 if result and result.detections:
@@ -148,6 +149,7 @@ class CameraStream:
                         # Recherche BDD
                         t2 = time.perf_counter()
                         name, score = search_embedding(embedding)
+                        print(name)
                         #t_recherche += (time.perf_counter() - t2) * 1000
 
 
@@ -156,8 +158,9 @@ class CameraStream:
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
-                """
-                
+
+                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=labels)
                 image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
