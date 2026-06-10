@@ -26,7 +26,7 @@ from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
-from fonction.bodyTracker import BodyTracker
+from fonction.tracker import BodyTracker
 
 
 
