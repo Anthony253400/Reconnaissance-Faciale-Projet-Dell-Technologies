@@ -8,8 +8,7 @@ _COLORS = {
 }
 _DARK = (15, 15, 15)
 _WHITE = (255, 255, 255)
-
-
+ 
 def DrawBox(image, boxes, color="green", labels=None):
     """
     Drop-in replacement, same signature as before:
