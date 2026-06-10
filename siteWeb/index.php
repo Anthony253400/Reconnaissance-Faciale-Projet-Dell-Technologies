@@ -108,7 +108,7 @@
             <p class="cta-label">Step 1</p>
             <h3 class="cta-title">Register a person</h3>
             <p class="cta-desc">Point the webcam at someone, press the button, and move your head slowly for a few seconds. Fill in their name and you're done.</p>
-            <a href="index.php" class="btn btn-primary">Go to Register</a>
+            <a href="register.php" class="btn btn-primary">Go to Register</a>
         </div>
         <div class="cta-card">
             <p class="cta-label">Step 2</p>

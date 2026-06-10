@@ -52,7 +52,7 @@ def DrawBox(image, list_boxes, color, labels=None):
         if labels and i < len(labels) and labels[i]:
             label = labels[i]
             font       = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.6
+            font_scale = 1
             thickness  = 1
 
             (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
