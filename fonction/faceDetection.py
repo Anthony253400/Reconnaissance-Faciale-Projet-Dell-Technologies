@@ -74,6 +74,14 @@ def FacesDetects_from_frame(image, method : str , detector):
             - image (numpy.ndarray): The loaded image data in RGB format.
     
     """ 
+    if numpy == False : 
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    else:
+        image_bgr = image_bytes
+    
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)  # ← fix qui
+    
     box = []
     if method == "mtcnn":
         detector = MTCNN(device="CPU:0")

@@ -138,14 +138,20 @@ function beginCapture(overlay, numEl) {
  */
 async function addPerson() {
 
-    if (!document.getElementById('consent').checked) { alert("You must accept the privacy policy."); return; }
+    if (!document.getElementById('consent').checked) {
+        alert("You must accept the privacy policy.");
+        return;
+    }
 
     const firstName = document.getElementById('firstName').value;
     const lastName  = document.getElementById('lastName').value;
     const nameRegex = /^[a-zA-ZÀ-ÿ]{1,}$/;
 
     if (!firstName || !lastName) { alert("Please fill in all fields."); return; }
-    if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) { alert("Names can only contain letters."); return; }
+    if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
+        alert("Names can only contain letters.");
+        return;
+    }
 
     const blobs = getBlobs();
     if (blobs.length === 0) { alert('Please capture or upload at least one photo.'); return; }
@@ -153,59 +159,68 @@ async function addPerson() {
     const btn = document.querySelector('.btn.btn-primary');
     const msg = document.getElementById('message');
     btn.disabled = true;
+    msg.textContent = 'Sending...';
 
+    // Progress bar indeterminata (un solo invio)
     const bar = document.createElement('div');
     bar.style.cssText = 'height:3px;background:#e4e4e0;border-radius:99px;margin-top:8px;overflow:hidden;';
     const fill = document.createElement('div');
-    fill.style.cssText = 'height:100%;width:0%;background:#0076CE;border-radius:99px;transition:width 0.15s ease;';
+    fill.style.cssText = 'height:100%;width:0%;background:#0076CE;border-radius:99px;transition:width 1.5s ease;';
     bar.appendChild(fill);
     msg.after(bar);
 
-    const total = blobs.length;
-    let received = 0;
+    // Anima verso 90% subito — il 100% arriva con la risposta del server
+    requestAnimationFrame(() => { fill.style.width = '90%'; });
 
-    const ws = new WebSocket('ws://localhost:8000/ws/add');
+    // Un solo FormData con tutti i frame
+    const formData = new FormData();
+    formData.append('firstName', firstName);
+    formData.append('lastName',  lastName);
+    blobs.forEach((blob, i) => formData.append('photos', blob, `frame_${i}.jpg`));
 
-    ws.onopen = () => {
-        ws.send(JSON.stringify({ firstName, lastName }));
-        blobs.forEach(blob => ws.send(blob));
-    };
+    try {
+        const res = await fetch('http://localhost:8000/add', {
+            method: 'POST',
+            body: formData
+        });
 
-    ws.onmessage = () => {
-        received++;
-        fill.style.width = Math.round(received / total * 100) + '%';
-        msg.textContent = `Sending... ${received} / ${total}`;
+        if (res.ok) {
+            fill.style.transition = 'width 0.2s ease';
+            fill.style.width      = '100%';
+            fill.style.background = '#16a34a';
+            msg.textContent       = 'Person added successfully!';
 
-        if (received >= total) {
-            ws.close();
-            msg.textContent = 'Person added successfully!';
             const testBtn = document.createElement('a');
-            testBtn.href = 'detection.html';
+            testBtn.href        = 'detection.html';
             testBtn.textContent = 'Test detection →';
             testBtn.style.cssText = 'display:inline-block;margin-top:10px;font-size:0.875rem;font-weight:500;color:#0076CE;text-decoration:none;';
             msg.after(testBtn);
-            fill.style.background = '#16a34a';
-            setTimeout(() => {
-                bar.remove();
-            }, 2000);
 
-            capturedPhotos = [];
-            document.getElementById('progress').textContent = '';
-            document.getElementById('btn-record').disabled = false;
-            document.getElementById('firstName').value = '';
-            document.getElementById('lastName').value  = '';
-            document.getElementById('consent').checked = false;
-            const ring = document.getElementById('capture-ring');
-            if (ring) ring.style.strokeDashoffset = RING_CIRCUMFERENCE;
-            btn.disabled = false;
+        } else {
+            const err = await res.text();
+            msg.textContent       = `Error: ${err}`;
+            fill.style.background = '#dc2626';
+            fill.style.width      = '100%';
         }
-    };
 
-    ws.onerror = () => {
-        msg.textContent = 'Error: server not available';
-        bar.remove();
-        btn.disabled = false;
-    };
+    } catch (e) {
+        msg.textContent       = 'Error: server not available';
+        fill.style.background = '#dc2626';
+        fill.style.width      = '100%';
+    }
+
+    setTimeout(() => bar.remove(), 2000);
+
+    // Reset form
+    capturedPhotos = [];
+    document.getElementById('progress').textContent = '';
+    document.getElementById('btn-record').disabled  = false;
+    document.getElementById('firstName').value      = '';
+    document.getElementById('lastName').value       = '';
+    document.getElementById('consent').checked      = false;
+    const ring = document.getElementById('capture-ring');
+    if (ring) ring.style.strokeDashoffset = RING_CIRCUMFERENCE;
+    btn.disabled = false;
 }
 
 /**
