@@ -1,11 +1,6 @@
-/* ============================================================
-   style.css — Face Recognition App
-   Theme: Clean / Minimal / Professional
-   ============================================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
-/* ── Variables ── */
+/* VARIABLES */
 :root {
   --bg:           #f4f4f1;
   --surface:      #ffffff;
@@ -27,11 +22,11 @@
   --navbar-h:     60px;
 }
 
-/* ── Reset ── */
+/*  Reset  */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; }
 
-/* ── Body ── */
+/*  BODY  */
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -52,7 +47,7 @@ body {
   gap: 1.25rem;
 }
 
-/* ── Navbar — sticky ── */
+/* NAVBAR*/
 .navbar {
   position: fixed;
   top: 0;
@@ -79,8 +74,6 @@ body {
 }
 
 .nav-brand {
-  color: var(--dell-blue);
-  text-decoration: none;
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;

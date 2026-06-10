@@ -1,6 +1,6 @@
 <nav class="navbar">
     <div class="navbar-inner">
-        <a href="index.php"> <span class="nav-brand">Face Recognition</span> </a>
+        <a  href="index.php" class = nav-link> <span class="nav-brand">Face Recognition</span> </a>
         
         <div class="nav-links">
             <a href="index.php" class="nav-link">Home</a>
