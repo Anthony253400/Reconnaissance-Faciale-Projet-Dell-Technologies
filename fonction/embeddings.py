@@ -5,7 +5,7 @@ import numpy as np
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-session = ort.InferenceSession(os.path.join(BASE_DIR, "model", "arc.onnx"))
+session = ort.InferenceSession(os.path.join(BASE_DIR, "../model", "arc.onnx"))
 def preprocessing(img):
     """
     Preprocesses a cropped image for embedding generation.

@@ -80,7 +80,7 @@ def FacesDetects_from_bytes(image_bytes, method , detector , numpy = False):
     else:
         image_bgr = image_bytes
     
-    image_rgb = image_bytes
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)  # ← fix qui
     
     box = []
     if method == "mtcnn":
