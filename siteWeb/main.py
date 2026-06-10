@@ -26,6 +26,7 @@ from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
+from fonction.bodyTracker import BodyTracker
 
 
 
@@ -110,7 +111,30 @@ class CameraStream:
                 boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
+                face_names = []
+                crops = []
+                if result and result.detections:
+                    crops = align_crop(frame, result, "mediapipe")
+                    for face_cropped in crops:
+                        embedding = get_embedding(face_cropped, model_arcface)
+                        name, score = search_embedding(embedding)
+                        face_names.append(f"{name}" if name else "")
+                else:
+                    face_names = [""] * len(boxes_face)
 
+                # Découpe des crops corps (pour le tracker, pas pour l'embedding)
+                body_crops = []
+                for box in boxes_body:
+                    x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+                    body_crops.append(frame[y1:y2, x1:x2])
+                body_names = tracker.update(
+                    face_boxes=boxes_face,
+                    body_boxes=boxes_body,
+                    face_names=face_names,
+                    body_crops=body_crops,  
+                )
+                """                
+                
                 labels = []
                 if result and result.detections:
                     # Alignment
@@ -137,8 +161,10 @@ class CameraStream:
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
-                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
+                """
+                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=face_names)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
+                
                 image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
@@ -183,6 +209,11 @@ class CameraStream:
 
 
 camera = CameraStream(src=0)
+tracker = BodyTracker(
+    iou_threshold=0.1,
+    max_distance=80,
+    max_lost_frames=1800,
+)
 
 
 #frame
