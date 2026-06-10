@@ -22,7 +22,11 @@
     </style>
 </head>
 <body>
+
+<?php include("navbar.php"); ?>
+
 <div class="container">
+
 
 
     <header class="page-header">
