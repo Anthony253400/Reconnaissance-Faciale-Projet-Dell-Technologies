@@ -30,6 +30,7 @@ from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
 from fonction.tracker import BodyTracker 
 from fonction.bodyAlignment import body_crop
+from fonction.identity_smoother import SmootherBank
 
 
 
@@ -140,7 +141,7 @@ class CameraStream:
                     t_alignement = (time.perf_counter() - t0) * 1000
 
 
-                    for face_cropped in crops:
+                    for i, face_cropped in enumerate(crops):    
                         # Embedding
                         t1 = time.perf_counter()
                         embedding = get_embedding(face_cropped, model_arcface)
@@ -149,13 +150,14 @@ class CameraStream:
 
                         # Recherche BDD
                         t2 = time.perf_counter()
-                        name, score = search_embedding(embedding)
-                        print(name)
+                        raw_name, raw_score = search_embedding(embedding)     
+                        name, score = smoothers.update(i, raw_name, raw_score)  
+                        print(f"raw: {raw_name} ({raw_score}) → mostrato: {name}")  
                         #t_recherche += (time.perf_counter() - t2) * 1000
 
 
-                        labels.append(f"{name} ({score:.2f})" if name and score is not None else "inconnu")
-
+                        labels.append(f"{name}  {score:.2f}" if name and score is not None else "inconnu")
+                smoothers.prune(len(crops))
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
@@ -204,6 +206,7 @@ class CameraStream:
         self.running = False
         self.cap.release()
 
+smoothers = SmootherBank(window=20, min_votes=10, min_score=0.45, score_hold=15)
 
 camera = CameraStream(src=0)
 tracker = BodyTracker(
@@ -211,7 +214,6 @@ tracker = BodyTracker(
     max_distance=80,
     max_lost_frames=1800,
 )
-
 
 #frame
 @app.get("/frame")
