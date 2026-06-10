@@ -18,8 +18,8 @@
         <h1 class="hero-title">Real time face recognition</h1>
         <p class="hero-sub">Register a person once, then let the camera recognise them automatically even from behind or at a distance.</p>
         <div class="btn-row centered">
-            <a href="index.html" class="btn btn-primary">Register a person</a>
-            <a href="detection.html" class="btn btn-secondary">Start detection</a>
+            <a href="register.php" class="btn btn-primary">Register a person</a>
+            <a href="detection.php" class="btn btn-secondary">Start detection</a>
         </div>
     </div>
 
