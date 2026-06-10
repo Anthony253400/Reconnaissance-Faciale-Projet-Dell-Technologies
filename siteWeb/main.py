@@ -123,13 +123,13 @@ class CameraStream:
                         # Embedding
                         t1 = time.perf_counter()
                         embedding = get_embedding(face_cropped, model_arcface)
-                        t_embedding += (time.perf_counter() - t1) * 1000
+                        #t_embedding += (time.perf_counter() - t1) * 1000
 
 
                         # Recherche BDD
                         t2 = time.perf_counter()
                         name, score = search_embedding(embedding)
-                        t_recherche += (time.perf_counter() - t2) * 1000
+                        #t_recherche += (time.perf_counter() - t2) * 1000
 
 
                         labels.append(f"{name} ({score:.2f})" if name and score is not None else "inconnu")
@@ -139,6 +139,7 @@ class CameraStream:
                 t0 = time.perf_counter()
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
                 image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=labels)
+                image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
 
@@ -152,15 +153,15 @@ class CameraStream:
                 # Affichage dans le terminal séparé par des ';'
                 print(
                     f"Total:{t_total:.1f}ms | "
-                    f"Decodage:{t_decode:.1f}ms | "
-                    f"ConvColor:{t_cv_color:.1f}ms | "
-                    f"InferFace:{t_infer_face:.1f}ms | "
+                    #f"Decodage:{t_decode:.1f}ms | "
+                    #f"ConvColor:{t_cv_color:.1f}ms | "
+                    #f"InferFace:{t_infer_face:.1f}ms | "
                     f"DetFaceTotal:{t_detection_face_total:.1f}ms | "
                     f"DetBody:{t_detection_body:.1f}ms | "
                     f"Alignement:{t_alignement:.1f}ms | "
-                    f"Embedding:{t_embedding:.1f}ms | "
-                    f"Recherche:{t_recherche:.1f}ms | "
-                    f"DessinEnc:{t_formatage_final:.1f}ms"
+                   # f"Embedding:{t_embedding:.1f}ms | "
+                   # f"Recherche:{t_recherche:.1f}ms | "
+                   # f"DessinEnc:{t_formatage_final:.1f}ms"
                 )
 
 
