@@ -26,7 +26,9 @@ from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.DrawBox import DrawBox
 from fonction.bodyDetection import BodyDetect_from_frame
-from fonction.tracker import BodyTracker
+from fonction.tracker import BodyTracker 
+from fonction.bodyAlignment import body_crop
+
 
 
 
@@ -111,31 +113,20 @@ class CameraStream:
                 boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
-                face_names = []
+                names = [""] * len(boxes_face)
+                clean_names = [""] * len(boxes_face)
                 if result and result.detections:
-                    crops = align_crop(frame, result, "mediapipe")
-                    for face_cropped in crops:
-                        embedding = get_embedding(face_cropped, model_arcface)
+                    crops = align_crop(frame, result)
+                    for i, face_cropped in enumerate(crops):
+                        embedding = get_embedding(face_cropped)
                         name, score = search_embedding(embedding)
-                        face_names.append(name if name else "")
+                        score_str = f"{score:.2f}" if score else "?"
+                        names[i] = f"{name} ({score_str})"
+                        clean_names[i] = name
+                crops_body = body_crop(frame, boxes_body) if boxes_body else []
+                body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
 
-                # Crops corps pour le tracker (sans embedding pour l'instant)
-                body_crops = []
-                for box in boxes_body:
-                    x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
-                    x1, y1 = max(0, x1), max(0, y1)
-                    body_crops.append(frame[y1:y2, x1:x2])
-
-                # tracker.update retourne toujours les derniers noms connus
-                # même si face_names est [] — c'est l'étape 2 (centroïde) qui prend le relais
-                body_names = tracker.update(
-                    face_boxes=boxes_face,
-                    body_boxes=boxes_body,
-                    face_names=face_names,
-                    body_crops=body_crops,
-                )
-
-                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=face_names)
+                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=name)
                 image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
                 """                
                 
