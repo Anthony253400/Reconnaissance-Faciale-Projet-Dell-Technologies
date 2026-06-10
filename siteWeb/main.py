@@ -112,27 +112,31 @@ class CameraStream:
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
                 face_names = []
-                crops = []
                 if result and result.detections:
                     crops = align_crop(frame, result, "mediapipe")
                     for face_cropped in crops:
                         embedding = get_embedding(face_cropped, model_arcface)
                         name, score = search_embedding(embedding)
-                        face_names.append(f"{name}" if name else "")
-                else:
-                    face_names = [""] * len(boxes_face)
+                        face_names.append(name if name else "")
 
-                # Découpe des crops corps (pour le tracker, pas pour l'embedding)
+                # Crops corps pour le tracker (sans embedding pour l'instant)
                 body_crops = []
                 for box in boxes_body:
                     x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+                    x1, y1 = max(0, x1), max(0, y1)
                     body_crops.append(frame[y1:y2, x1:x2])
+
+                # tracker.update retourne toujours les derniers noms connus
+                # même si face_names est [] — c'est l'étape 2 (centroïde) qui prend le relais
                 body_names = tracker.update(
                     face_boxes=boxes_face,
                     body_boxes=boxes_body,
                     face_names=face_names,
-                    body_crops=body_crops,  
+                    body_crops=body_crops,
                 )
+
+                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=face_names)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
                 """                
                 
                 labels = []
@@ -162,8 +166,6 @@ class CameraStream:
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
                 """
-                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=face_names)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
                 
                 image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
