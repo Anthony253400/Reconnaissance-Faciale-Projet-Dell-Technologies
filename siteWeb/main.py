@@ -157,7 +157,7 @@ class CameraStream:
 
 
                         labels.append(f"{name}  {score:.2f}" if name and score is not None else "inconnu")
-                smoothers.prune(len(crops))
+                    smoothers.prune(len(boxes_face))
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()

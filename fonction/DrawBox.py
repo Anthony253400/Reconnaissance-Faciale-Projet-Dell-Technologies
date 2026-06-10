@@ -8,7 +8,24 @@ _COLORS = {
 }
 _DARK = (15, 15, 15)
 _WHITE = (255, 255, 255)
- 
+
+# Extra named colors for backward compatibility with other modules
+_EXTRA_COLORS = {
+    "blue":   (59, 130, 246),
+    "yellow": (250, 204, 21),
+    "white":  _WHITE,
+    "black":  (0, 0, 0),
+    "gray":   (128, 128, 128),
+    "orange": (249, 115, 22),
+}
+
+
+def color_name_to_rgb(name):
+    """Map a color name to an RGB tuple (defaults to green if unknown)."""
+    name = (name or "").lower()
+    return _COLORS.get(name) or _EXTRA_COLORS.get(name) or _COLORS["green"]
+
+
 def DrawBox(image, boxes, color="green", labels=None):
     """
     Drop-in replacement, same signature as before:
@@ -21,7 +38,7 @@ def DrawBox(image, boxes, color="green", labels=None):
     if boxes is None or len(boxes) == 0:
         return image
 
-    c = _COLORS.get(color, _COLORS["green"])
+    c = color_name_to_rgb(color)
     h, w = image.shape[:2]
     t = max(2, round(min(h, w) / 380))   # line thickness scales with resolution
     out = image.copy()
