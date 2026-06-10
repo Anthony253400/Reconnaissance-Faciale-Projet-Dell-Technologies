@@ -108,17 +108,17 @@
             <p class="cta-label">Step 1</p>
             <h3 class="cta-title">Register a person</h3>
             <p class="cta-desc">Point the webcam at someone, press the button, and move your head slowly for a few seconds. Fill in their name and you're done.</p>
-            <a href="index.html" class="btn btn-primary">Go to Register</a>
+            <a href="index.php" class="btn btn-primary">Go to Register</a>
         </div>
         <div class="cta-card">
             <p class="cta-label">Step 2</p>
             <h3 class="cta-title">Start detection</h3>
             <p class="cta-desc">Open the live camera view. Registered people will be identified automatically with a coloured box around their face.</p>
-            <a href="detection.html" class="btn btn-secondary">Go to Detect</a>
+            <a href="detection.php" class="btn btn-secondary">Go to Detect</a>
         </div>
         <div class="cta-card">
             <p class="cta-desc">Curious about how we evaluate the model?</p>
-            <a href="statistics.html" class="btn btn-secondary">View Evaluation Statistics</a>
+            <a href="statistics.php" class="btn btn-secondary">View Evaluation Statistics</a>
         </div>
     </div>
 

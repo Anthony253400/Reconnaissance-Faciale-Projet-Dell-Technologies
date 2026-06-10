@@ -36,8 +36,6 @@ from fonction.bodyAlignment import body_crop
 
 app = FastAPI()
 
-register_statistics_routes(app) 
-
 # MODELE
 model_mediapipe = load_model("blazeface_short",  False)
 model_arcface = load_model("arcface",  True)

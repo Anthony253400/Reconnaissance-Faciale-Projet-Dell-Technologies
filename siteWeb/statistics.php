@@ -34,10 +34,12 @@
 </style>
 </head>
 <body>
+
+<?php include("navbar.php"); ?>
+
 <div class="stats-wrap">
 
   <div class="stats-card">
-    <a class="back-link" href="home.html">&larr; Back to home</a>
     <h1>Model Evaluation</h1>
     <p>This page shows how well the face-recognition system actually works, tested on two very
     different sets of photos. The first is our own <strong>custom set</strong>, taken on purpose
