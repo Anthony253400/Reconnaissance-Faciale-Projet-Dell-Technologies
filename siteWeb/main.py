@@ -240,7 +240,7 @@ async def add_person(
         contents = await photo.read()
 
         try:
-            boxes_face, result, image = FacesDetects_from_frame(
+            boxes_face, result, image = FacesDetects_from_bytes(
                 contents, "mediapipe", model_mediapipe)
 
             if not result or not result.detections:
