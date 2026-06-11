@@ -194,13 +194,13 @@ class CameraStream:
         self.running = False
         self.cap.release()
 
-smoothers = SmootherBank(window=20, min_votes=10, min_score=0.45, score_hold=15)
+smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
 
 camera = CameraStream(src=0)
 tracker = BodyTracker(
     iou_threshold=0.1,
     max_distance=80,
-    max_lost_frames=1800,
+    max_lost_frames=90,
 )
 
 #frame
