@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList
+from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList, Filter, FieldCondition, MatchValue
 import uuid
 import os
 
@@ -97,3 +97,4 @@ def delete_person(name):
     )
     print(f"Deleted all entries for: {name}")
 
+delete_person("lea carminati")
