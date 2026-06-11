@@ -1,0 +1,11 @@
+
+:root {
+  --scan-cyan:        #005fa3; /* Bleu plus soutenu */
+  --scan-cyan-dim:    rgba(0, 95, 163, 0.12);
+  --scan-cyan-glow:   rgba(0, 95, 163, 0.6); /* Glow plus intense et sombre */
+  --scan-violet:      #7C5CFC;
+  --scan-green:       #22D3A0;
+  --scan-yellow:      #F5C542;
+  --scan-bg:          #050A14;
+  --scan-font-mono:   'Space Mono', monospace;
+}

@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Face Recognition — Detect</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/navbar.css">
+
+    <script src="assets/js/navbar.js"></script>
+
     <style>
         /* {border : red dotted 1px}
         /* riquadro originale — invariato */
@@ -23,7 +27,7 @@
 </head>
 <body>
 
-<?php include("navbar.php"); ?>
+<?php include("components/navbar.php"); ?>
 
 <div class="container">
 
@@ -53,9 +57,8 @@
     </div>
 
 
-    <div class="footer">
-        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>  
-    </div>
+<?php include("components/footer.php") ;?>
+
 
 
 </div>

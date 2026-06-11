@@ -1,0 +1,62 @@
+
+@import url('variables/variables.css');
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--navbar-h);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.navbar-inner {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  color: var(--dell-blue);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 6px;
+}
+
+.nav-link {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+
+.nav-link:hover {
+  background: var(--accent-light);
+  color: var(--text);
+}
+
+.nav-link.active {
+  background: var(--dell-blue-bg);
+  color: var(--dell-blue);
+  border-color: rgba(0, 118, 206, 0.2);
+  font-weight: 500;
+}

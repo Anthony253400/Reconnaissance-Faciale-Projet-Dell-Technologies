@@ -1,28 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+@import url('variables/variables.css');
 
-/* VARIABLES */
-:root {
-  --bg:           #f4f4f1;
-  --surface:      #ffffff;
-  --border:       #e4e4e0;
-  --border-focus: #1a1a1a;
-  --text:         #1a1a1a;
-  --text-muted:   #888884;
-  --accent:       #1a1a1a;
-  --accent-hover: #333333;
-  --accent-light: #f0f0ec;
-  --dell-blue:    #0076CE;
-  --dell-blue-bg: #e8f3fb;
-  --success:      #16a34a;
-  --radius:       12px;
-  --radius-sm:    7px;
-  --shadow:       0 1px 3px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
-  --font:         'DM Sans', sans-serif;
-  --ease:         140ms ease;
-  --navbar-h:     60px;
-}
 
-/*  Reset  */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; }
 
@@ -38,6 +17,10 @@ body {
   padding-right: 1.25rem;
 }
 
+/* SCANNER*/
+
+
+
 /* ── Container ── */
 .container {
   max-width: 1500px;
@@ -47,65 +30,6 @@ body {
   gap: 1.25rem;
 }
 
-/* NAVBAR*/
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: var(--navbar-h);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 2rem;
-}
-
-.navbar-inner {
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-brand {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.nav-links {
-  display: flex;
-  gap: 6px;
-}
-
-.nav-link {
-  font-size: 0.8125rem;
-  font-weight: 400;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: background var(--ease), color var(--ease), border-color var(--ease);
-}
-
-.nav-link:hover {
-  background: var(--accent-light);
-  color: var(--text);
-}
-
-.nav-link.active {
-  background: var(--dell-blue-bg);
-  color: var(--dell-blue);
-  border-color: rgba(0, 118, 206, 0.2);
-  font-weight: 500;
-}
 
 /* ── Header ── */
 .page-header {
@@ -186,8 +110,8 @@ body {
 
 /* ── Method toggle ── */
 .method-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+    justify-content: center; /* Aligne les boutons au milieu horizontalement */
   gap: 8px;
   margin-bottom: 1.5rem;
 }
@@ -539,9 +463,49 @@ body {
 .legend-dot.red   { background: #dc2626; }
 
 /* ── Home page ── */
+
 .hero {
-  text-align: center;
-  padding: 2.5rem 1rem 1.5rem;
+    height: 700px;
+    /*background-color: #dc2626;*/
+    position: relative; /* Indispensable pour garder l'animation à l'intérieur */
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    overflow: hidden; /* Empêche l'animation de déborder en dehors de la boîte */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 450px; /* Donne un peu de hauteur pour bien voir le scan */
+}
+
+/* L'arrière-plan animé */
+#hero-scanner-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Reste tout au fond */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.8; /* Opacité forte pour le test. Baisse-la ensuite si besoin */
+    pointer-events: none; /* Empêche la souris d'être bloquée par l'animation */
+}
+
+/* Ajustement de la taille du scanneur */
+#hero-scanner-bg .scanner-wrapper {
+    transform: scale(2); /* taille du scanner */
+}
+
+/* Le texte et les boutons */
+.hero-content {
+    position: relative;
+    z-index: 10; /* Reste toujours au-dessus de l'animation */
+    background: rgba(244, 244, 241, 0.4); /* (Optionnel) Un très léger flou derrière le texte pour qu'il reste lisible */
+    backdrop-filter: blur(2px);
+    padding: 2rem;
+    border-radius: 12px;
 }
 
 .hero-badge {
@@ -755,18 +719,7 @@ body {
   text-underline-offset: 2px;
 }
 
-/* ── Footer ── */
-.footer {
-  border-top: 1px solid var(--border);
-  padding-top: 1.25rem;
-  text-align: center;
-}
 
-.footer p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 300;
-}
 
 /* ── Responsive ── */
 @media (max-width: 640px) {

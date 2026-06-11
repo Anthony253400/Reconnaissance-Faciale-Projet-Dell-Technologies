@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Model Evaluation Statistics</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model Evaluation Statistics</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/navbar.css">
+
+  <script src="assets/js/navbar.js"></script>
+
+
 <style>
   :root {
     --blue:#0076CE; --orange:#e67e22; --green:#16a34a; --red:#dc3545; --muted:#888884;
@@ -35,7 +40,7 @@
 </head>
 <body>
 
-<?php include("navbar.php"); ?>
+<?php include("<components/navbar.php"); ?>
 
 <div class="stats-wrap">
 
@@ -151,6 +156,9 @@
     <p class="note">The custom dataset is small (10 people), so the trend is clear but the
     exact cell counts carry the wide uncertainty shown in the confidence-interval chart above.</p>
   </div>
+
+  <?php include("components/footer.php") ;?>
+
 
 </div>
 

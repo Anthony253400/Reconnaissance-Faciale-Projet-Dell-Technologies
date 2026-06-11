@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy policy</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/navbar.css">
+    <link rel="stylesheet" href="assets/css/footer.css">
+
+    <script src="assets/js/navbar.js"></script>
+
+
 </head>
 <body>
 
-<?php include("navbar.php"); ?>
+<?php include("components/navbar.php"); ?>
 
 <div class="container">
 
@@ -48,9 +54,8 @@
 
     
 
-    <div class="footer">
-        <p>Project curricular internship 2026 by Anthony Miranda and Lea Carminati for Dell Technologies Montpellier</p>
-    </div>
+<?php include("components/footer.php") ;?>
+
 
 </div>
 </body>
