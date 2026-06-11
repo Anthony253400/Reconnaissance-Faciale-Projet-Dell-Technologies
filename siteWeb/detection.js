@@ -1,6 +1,5 @@
 const MIRROR = true;        // front camera is mirrored
-const SEND_W = 640;         // resolution sent to the server (smaller = faster)
-const SEND_H = 480;
+
 
 async function init() {
     await startWebcam();
@@ -11,9 +10,11 @@ async function init() {
 async function startWebcam() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 960 }, audio: false
+            video: true, audio: false               // ← non forziamo la risoluzione
         });
-        document.getElementById('webcam').srcObject = stream;
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        await new Promise(r => video.onloadedmetadata = r);  // ← aspetta le dimensioni vere
     } catch (error) {
         alert("Cannot access camera: " + error.message);
     }
@@ -26,9 +27,17 @@ function startDetection() {
     const ctxOver = overlay.getContext('2d');
     const ctxCap  = capture.getContext('2d');
 
-    // the capture canvas defines the coordinate space the server works in
+    // use the camera's REAL aspect ratio, scaled down to ~640 wide for speed
+    const vw = video.videoWidth  || 640;
+    const vh = video.videoHeight || 480;
+    const scale = 640 / vw;
+    const SEND_W = Math.round(vw * scale);          // ← derived, not forced
+    const SEND_H = Math.round(vh * scale);
+
     capture.width  = SEND_W;
     capture.height = SEND_H;
+    overlay.width  = SEND_W;                          // ← set once, same space
+    overlay.height = SEND_H;
 
     const ws = new WebSocket('ws://localhost:8000/ws/detect');
 
@@ -36,28 +45,19 @@ function startDetection() {
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
-        // match the overlay to the video's displayed size, but keep drawing
-        // in the SEND_W x SEND_H coordinate space the server used
-        overlay.width  = SEND_W;
-        overlay.height = SEND_H;
         ctxOver.clearRect(0, 0, overlay.width, overlay.height);
 
-        // --- faces ---
         for (let i = 0; i < data.faces.length; i++) {
             const [x1, y1, x2, y2] = data.faces[i];
             const dX1 = MIRROR ? overlay.width - x2 : x1;
             const dX2 = MIRROR ? overlay.width - x1 : x2;
-
             const name  = data.names[i] || "";
             const score = data.scores[i] || 0;
             const color = score >= 0.70 ? "#10b981" : score >= 0.50 ? "#facc15" : "#9ca3af";
-
             drawBox(ctxOver, dX1, y1, dX2 - dX1, y2 - y1, color,
                     name && name !== "inconnu" ? `${name}  ${score.toFixed(2)}` : "inconnu");
         }
 
-        // --- bodies ---
         for (let i = 0; i < data.body.length; i++) {
             const [x1, y1, x2, y2] = data.body[i];
             const dX1 = MIRROR ? overlay.width - x2 : x1;
@@ -72,10 +72,8 @@ function startDetection() {
     ws.onclose = () => console.log("WebSocket disconnected");
     ws.onerror = (e) => console.error("WebSocket error:", e);
 
-    // grab the current video frame, scale it to SEND_W x SEND_H, send as JPEG
     function sendFrame() {
         if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount === 0) {
-            ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
             ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
             capture.toBlob((blob) => { if (blob) ws.send(blob); }, 'image/jpeg', 0.8);
         }
