@@ -92,107 +92,95 @@ class CameraStream:
 
 
     def _ai_loop(self):
-        """Pipeline IA — prend la dernière frame dispo et la traite"""
+        """AI pipeline thread — grabs the latest available frame and processes it.
+
+        Per frame:
+          1. detect faces (MediaPipe) and bodies (YOLO)
+          2. for each face: align -> embed -> search Qdrant -> temporal smoothing
+          3. feed clean face names to the BodyTracker to label each body
+          4. draw boxes (green = face with name+score, red = body with name)
+        On any error the raw frame is sent back so the stream never freezes.
+        """
         while self.running:
             t_start_total = time.perf_counter()
-
 
             with self.lock_raw:
                 frame = self.raw_frame
             if frame is None:
                 continue
 
-
-            try:               
-                # Face Detection
+            try:
+                # --- Face detection ---
                 t0 = time.perf_counter()
-                boxes_face, result, image_rgb = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
+                boxes_face, result, image_rgb = FacesDetects_from_frame(
+                    frame, "mediapipe", model_mediapipe)
                 t_detection_face_total = (time.perf_counter() - t0) * 1000
 
-
-                # Body Detection
+                # --- Body detection ---
                 t0 = time.perf_counter()
                 boxes_body, confidence = BodyDetect_from_frame(frame, model_yolo)
                 t_detection_body = (time.perf_counter() - t0) * 1000
 
-                """
-                names = [""] * len(boxes_face)
-                clean_names = [""] * len(boxes_face)
+                # --- Face recognition ---
+                labels = []        # decorated labels for FACE boxes: "name  0.83" / "inconnu"
+                clean_names = []   # clean names aligned with boxes_face: "lea" / "" if unknown
+                t_alignement = 0.0
+
                 if result and result.detections:
-                    crops = align_crop(frame, result,"mediapipe")
+                    # Align + crop every detected face (same order as boxes_face)
+                    t0 = time.perf_counter()
+                    crops = align_crop(frame, result, "mediapipe")
+                    t_alignement = (time.perf_counter() - t0) * 1000
+
                     for i, face_cropped in enumerate(crops):
-                        embedding = get_embedding(face_cropped,model_arcface)
-                        name, score = search_embedding(embedding)
-                        score_str = f"{score:.2f}" if score else "?"
-                        names[i] = f"{name} ({score_str})"
-                        clean_names[i] = name
+                        # embed the face and search the vector DB
+                        embedding = get_embedding(face_cropped, model_arcface)
+                        raw_name, raw_score = search_embedding(embedding)
+
+                        # temporal smoothing: stabilizes the name and freezes the score
+                        name, score = smoothers.update(i, raw_name, raw_score)
+
+                        # clean name for the tracker ("" when unknown / no match)
+                        clean = name if (name and name != "unknown") else ""
+                        clean_names.append(clean)
+
+                        # decorated label for the on-screen green box
+                        labels.append(f"{name}  {score:.2f}"
+                                      if clean and score is not None else "inconnu")
+
+                    # drop smoothers for faces that left the scene
+                    smoothers.prune(len(boxes_face))
+
+                # --- Body tracking ---
+                # Link each body to a person: IoU with a known face first,
+                # then centroid distance, then body-embedding re-entry.
                 crops_body = body_crop(frame, boxes_body) if boxes_body else []
                 body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
 
-                image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=name)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=body_names)
-                """
-                
-                labels = []
-                if result and result.detections:
-                    # Alignment
-                    t0 = time.perf_counter()
-                    crops = align_crop(frame, result , "mediapipe")
-                    t_alignement = (time.perf_counter() - t0) * 1000
-
-
-                    for i, face_cropped in enumerate(crops):    
-                        # Embedding
-                        t1 = time.perf_counter()
-                        embedding = get_embedding(face_cropped, model_arcface)
-                        #t_embedding += (time.perf_counter() - t1) * 1000
-
-
-                        # Recherche BDD
-                        t2 = time.perf_counter()
-                        raw_name, raw_score = search_embedding(embedding)     
-                        name, score = smoothers.update(i, raw_name, raw_score)  
-                        print(f"raw: {raw_name} ({raw_score}) → mostrato: {name}")  
-                        #t_recherche += (time.perf_counter() - t2) * 1000
-
-
-                        labels.append(f"{name}  {score:.2f}" if name and score is not None else "inconnu")
-                    smoothers.prune(len(boxes_face))
-
-                # Dessin & Encodage final
+                # --- Draw & encode ---
                 t0 = time.perf_counter()
-
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=labels)
-                image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red', labels=body_names)
+                image_boxed = cv2.cvtColor(image_boxed, cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
-
 
                 with self.lock_out:
                     self.latest_frame = buf.tobytes()
 
-
+                # --- Per-stage timing (terminal) ---
                 t_total = (time.perf_counter() - t_start_total) * 1000
-               
-                # Affichage dans le terminal séparé par des ';'
                 print(
                     f"Total:{t_total:.1f}ms | "
-                    #f"Decodage:{t_decode:.1f}ms | "
-                    #f"ConvColor:{t_cv_color:.1f}ms | "
-                    #f"InferFace:{t_infer_face:.1f}ms | "
                     f"DetFaceTotal:{t_detection_face_total:.1f}ms | "
                     f"DetBody:{t_detection_body:.1f}ms | "
-                    f"Alignement:{t_alignement:.1f}ms | "
-                   # f"Embedding:{t_embedding:.1f}ms | "
-                   # f"Recherche:{t_recherche:.1f}ms | "
-                   # f"DessinEnc:{t_formatage_final:.1f}ms"
+                    f"Alignement:{t_alignement:.1f}ms"
                 )
 
-
             except Exception as e:
+                # keep the stream alive: re-encode the raw frame (RGB->BGR to keep colors)
                 print(f"Erreur _ai_loop : {e}")
-                _, buf = cv2.imencode('.jpg', frame)
+                _, buf = cv2.imencode('.jpg', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
                 with self.lock_out:
                     self.latest_frame = buf.tobytes()
 
