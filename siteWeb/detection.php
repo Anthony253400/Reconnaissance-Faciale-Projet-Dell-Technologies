@@ -5,6 +5,8 @@
     <title>Face Recognition — Detect</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/navbar.css">
+    <link rel="stylesheet" href="assets/css/footer.css">
+
 
     <script src="assets/js/navbar.js"></script>
 

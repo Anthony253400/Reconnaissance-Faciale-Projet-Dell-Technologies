@@ -137,7 +137,56 @@
         </div>
 
         <div class="home-section">
-            <p class="section-label">How to use it</p>
+
+        <section class="steps-section">
+            <div class="section-eyebrow">
+                <p class="eyebrow">Get started</p>
+                <h2>How to use the platform</h2>
+                <p class="desc">Follow these steps to register faces and run live detection in just a few minutes.</p>
+            </div>
+         
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon-wrap">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span class="step-number">1</span>
+                    </div>
+                    <h4>Register</h4>
+                    <p>Add a person to the database using your webcam or by uploading a photo. The system captures multiple angles for better accuracy.</p>
+                    <a href="register.html" class="btn-step">Register a person</a>
+                </div>
+         
+                <div class="step-card">
+                    <div class="step-icon-wrap">
+                        <i class="fa-solid fa-camera"></i>
+                        <span class="step-number">2</span>
+                    </div>
+                    <h4>Detect</h4>
+                    <p>Point your webcam at any registered person. The AI identifies faces in real time and displays the match with a confidence score.</p>
+                    <a href="detect.html" class="btn-step">Start detecting</a>
+                </div>
+         
+                <div class="step-card">
+                    <div class="step-icon-wrap">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span class="step-number">3</span>
+                    </div>
+                    <h4>Manage</h4>
+                    <p>Browse the database of registered people, remove entries, or update records. Keep control over who the system can recognize.</p>
+                    <a href="manage.html" class="btn-step">Manage database</a>
+                </div>
+         
+                <div class="step-card">
+                    <div class="step-icon-wrap">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span class="step-number">4</span>
+                    </div>
+                    <h4>Privacy</h4>
+                    <p>Understand how your data is used. All processing happens locally. Read the full privacy policy before registering anyone.</p>
+                    <a href="privacy.html" class="btn-step">Read the policy</a>
+                </div>
+            </div>
+        </section>
             <div class="hiw-list">
                 <div class="hiw-item">
                     <div class="hiw-icon">01</div>
@@ -227,55 +276,7 @@
             </div>
         </div>
 
-        <section class="steps-section">
-            <div class="section-eyebrow">
-                <p class="eyebrow">Get started</p>
-                <h2>How to use the platform</h2>
-                <p class="desc">Follow these steps to register faces and run live detection in just a few minutes.</p>
-            </div>
-         
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-icon-wrap">
-                        <i class="fa-solid fa-user-plus"></i>
-                        <span class="step-number">1</span>
-                    </div>
-                    <h4>Register</h4>
-                    <p>Add a person to the database using your webcam or by uploading a photo. The system captures multiple angles for better accuracy.</p>
-                    <a href="register.html" class="btn-step">Register a person</a>
-                </div>
-         
-                <div class="step-card">
-                    <div class="step-icon-wrap">
-                        <i class="fa-solid fa-camera"></i>
-                        <span class="step-number">2</span>
-                    </div>
-                    <h4>Detect</h4>
-                    <p>Point your webcam at any registered person. The AI identifies faces in real time and displays the match with a confidence score.</p>
-                    <a href="detect.html" class="btn-step">Start detecting</a>
-                </div>
-         
-                <div class="step-card">
-                    <div class="step-icon-wrap">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span class="step-number">3</span>
-                    </div>
-                    <h4>Manage</h4>
-                    <p>Browse the database of registered people, remove entries, or update records. Keep control over who the system can recognize.</p>
-                    <a href="manage.html" class="btn-step">Manage database</a>
-                </div>
-         
-                <div class="step-card">
-                    <div class="step-icon-wrap">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span class="step-number">4</span>
-                    </div>
-                    <h4>Privacy</h4>
-                    <p>Understand how your data is used. All processing happens locally. Read the full privacy policy before registering anyone.</p>
-                    <a href="privacy.html" class="btn-step">Read the policy</a>
-                </div>
-            </div>
-        </section>
+
 
     </div>
 
