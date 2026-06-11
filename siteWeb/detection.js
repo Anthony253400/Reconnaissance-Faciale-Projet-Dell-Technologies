@@ -76,6 +76,7 @@ function startDetection() {
     function sendFrame() {
         if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount === 0) {
             ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
+            ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
             capture.toBlob((blob) => { if (blob) ws.send(blob); }, 'image/jpeg', 0.8);
         }
     }

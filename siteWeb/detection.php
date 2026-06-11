@@ -19,7 +19,7 @@
             width: 100%;
             border-radius: 8px;
         }
-        .detection-wrapper video { transform: scaleX(-1); } /* mirror selfie view */
+        .detection-wrapper video { } /* mirror selfie view */
         .detection-wrapper { aspect-ratio: 4 / 3; }
     </style>
 </head>
