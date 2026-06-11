@@ -191,7 +191,7 @@ async function addPerson() {
             msg.textContent       = 'Person added successfully!';
 
             const testBtn = document.createElement('a');
-            testBtn.href        = 'detection.html';
+            testBtn.href        = 'detection.php';
             testBtn.textContent = 'Test detection →';
             testBtn.style.cssText = 'display:inline-block;margin-top:10px;font-size:0.875rem;font-weight:500;color:#0076CE;text-decoration:none;';
             msg.after(testBtn);

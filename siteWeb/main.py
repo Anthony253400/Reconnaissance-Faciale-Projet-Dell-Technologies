@@ -29,6 +29,8 @@ model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
 model_yolo      = load_model("yolo", True)
 
+create_collection()   # ensure the 'face' collection exists
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
