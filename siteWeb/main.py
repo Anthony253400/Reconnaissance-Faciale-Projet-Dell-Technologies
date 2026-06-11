@@ -1,3 +1,5 @@
+from unicodedata import name
+
 import cv2
 import sys
 import time
@@ -23,13 +25,13 @@ from fonction.tracker import BodyTracker
 from fonction.bodyAlignment import body_crop
 from fonction.identity_smoother import SmootherBank
 
-
+COLLECTION = 'face'
 app = FastAPI()
 
 # Models (loaded once at startup)
 model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
-model_yolo      = load_model("yolo", True)
+#model_yolo      = load_model("yolo", True)
 
 create_collection()   # ensure the 'face' collection exists
 
@@ -147,7 +149,8 @@ async def add_person(
                 continue
 
             embedding = get_embedding(crops[0], model_arcface)
-            save_embedding(name, embedding , client)
+
+            save_embedding( name, embedding , client ,COLLECTION)
             saved += 1
 
         except Exception as e:

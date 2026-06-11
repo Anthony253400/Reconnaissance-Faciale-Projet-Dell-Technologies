@@ -36,7 +36,7 @@ def create_collection():
             )
         )
 
-def save_embedding(name, embedding , client):
+def save_embedding(name, embedding , client , COLLECTION):
     """
     Saves a face embedding in the Qdrant vector database with the person's name as payload.
     Args:
