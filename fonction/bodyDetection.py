@@ -66,49 +66,39 @@ def BodyDetect(url_img : str , detector ):
 
 def BodyDetect_from_frame(image, model):
     """
-    Detects body from frame.
-    Args:
-        image (numpy.ndarray): The input image in RGB format.
-        model : Required for Yolo. Pre-initialized template instance
-    
-    Returns: 
-        tuple: 
-            - boxes (list): A list of lists in the format [x1, y1, x2, y2] (bounding boxes). 
-            - final_confidences (list): Float confidences associated with each detection. 
-    
-    """ 
+    Detects bodies (class 0 = person) in an RGB frame using YOLOv8 ONNX.
+
+    Returns:
+        tuple:
+            - boxes (list): bounding boxes [x1, y1, x2, y2] in the ORIGINAL
+              image coordinate space.
+            - final_confidences (list): confidence per detection.
+    """
     t_start = time.perf_counter()
 
     backend, session = model
-    print("-------------------------------")
-    print(backend)
-    print("-------------------------------")
-
     h, w, _ = image.shape
 
-    img_resized = cv2.resize(image, (320, 320))
-    blob = img_resized.astype(np.float32) / 255.0       # [0,1]
-    blob = np.transpose(blob, (2, 0, 1))                 # HWC → CHW
-    blob = np.expand_dims(blob, axis=0)                  # CHW → NCHW
-    #t_blob = time.perf_counter()
+    # YOLO input size used here
+    INPUT = 320
+    img_resized = cv2.resize(image, (INPUT, INPUT))
+    blob = img_resized.astype(np.float32) / 255.0
+    blob = np.transpose(blob, (2, 0, 1))
+    blob = np.expand_dims(blob, axis=0)
 
-
-    # inference
     if backend == 'onnx':
         input_name = session.get_inputs()[0].name
         outputs = session.run(None, {input_name: blob})
         predictions = np.squeeze(outputs[0]).T
-
-
     elif backend == 'opencv':
-        """Warning Not Functional"""
-        print("Warning : backend in BodyDetect_from_frame(... , model)")
-
-        blob_cv = cv2.dnn.blobFromImage(image, 1/255.0, (640, 640), swapRB=True, crop=False)
+        blob_cv = cv2.dnn.blobFromImage(image, 1/255.0, (INPUT, INPUT), swapRB=True, crop=False)
         session.setInput(blob_cv)
         outputs = session.forward()
         predictions = np.squeeze(outputs[0]).T
-    t_infer = time.perf_counter()
+
+    # scale factors from the INPUT grid back to the original frame
+    sx = w / INPUT
+    sy = h / INPUT
 
     box = []
     confidences = []
@@ -116,13 +106,13 @@ def BodyDetect_from_frame(image, model):
         score = row[4:].max()
         if score > 0.5:
             class_id = row[4:].argmax()
-            if class_id == 0:  # body people
+            if class_id == 0:  # person
                 cx, cy, rw, rh = row[0:4]
-                x1 = int((cx - rw/2) * (w / 640))
-                y1 = int((cy - rh/2) * (h / 640))
-                bw = int(rw * (w / 640))
-                bh = int(rh * (h / 640))
-                box.append([x1*2, y1*2, bw*2, bh*2])
+                x1 = int((cx - rw / 2) * sx)
+                y1 = int((cy - rh / 2) * sy)
+                bw = int(rw * sx)
+                bh = int(rh * sy)
+                box.append([x1, y1, bw, bh])
                 confidences.append(float(score))
 
     indices = cv2.dnn.NMSBoxes(box, confidences, score_threshold=0.5, nms_threshold=0.4)
@@ -135,13 +125,8 @@ def BodyDetect_from_frame(image, model):
             boxes.append([x, y, x + bw, y + bh])
             final_confidences.append(confidences[i])
 
-
-    t_end = time.perf_counter()
-    print(f"[Timer] Total : {(t_end - t_start)*1000:.2f} ms")
-
-
+    print(f"[Timer] BodyDetect : {(time.perf_counter() - t_start)*1000:.1f} ms")
     return boxes, final_confidences
-
 
 if __name__ == "__main__" :
         net = cv2.dnn.readNetFromONNX("model/yolov8n.onnx")
