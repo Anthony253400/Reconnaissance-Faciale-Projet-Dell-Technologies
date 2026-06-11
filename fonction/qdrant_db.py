@@ -9,7 +9,7 @@ import os
 #dell_guest
 #client = QdrantClient(host="172.19.89.254", port=225)
 
-client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+#client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
 
 """
 client = QdrantClient(host = os.getenv("qdrant_host" , 'localhost'),
