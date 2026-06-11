@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 from typing import List
+from qdrant_client import QdrantClient
+from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList, Filter, FieldCondition, MatchValue
 
 from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
@@ -122,6 +124,8 @@ async def add_person(
 
     saved = 0
     name = f"{firstName} {lastName}".strip().lower()
+    client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+
 
     for i, photo in enumerate(photos):
         contents = await photo.read()
@@ -143,7 +147,7 @@ async def add_person(
                 continue
 
             embedding = get_embedding(crops[0], model_arcface)
-            save_embedding(name, embedding)
+            save_embedding(name, embedding , client)
             saved += 1
 
         except Exception as e:
