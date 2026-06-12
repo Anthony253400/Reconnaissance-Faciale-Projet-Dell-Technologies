@@ -1,0 +1,6 @@
+docker start qdrant_facial_project
+
+cd siteWeb
+uvicorn main:app --reload
+
+python -m uvicorn main:app --reload
