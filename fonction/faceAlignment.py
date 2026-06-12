@@ -2,118 +2,81 @@ import cv2
 import numpy as np
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import numpy as np
 
 
+# ArcFace canonical 5-point template for a 112x112 crop
+# order: left eye, right eye, nose, left mouth corner, right mouth corner
+_ARC_TEMPLATE_5 = np.array([
+    [38.2946, 51.6963],
+    [73.5318, 51.5014],
+    [56.0252, 71.7366],
+    [41.5493, 92.3655],
+    [70.7299, 92.2041],
+], dtype=np.float32)
+
+# 4-point template used with MediaPipe, which only provides the mouth center
+# (not the two mouth corners): left eye, right eye, nose, mouth center.
+_ARC_TEMPLATE_4 = np.array(
+    [_ARC_TEMPLATE_5[0], _ARC_TEMPLATE_5[1], _ARC_TEMPLATE_5[2],
+     (_ARC_TEMPLATE_5[3] + _ARC_TEMPLATE_5[4]) / 2.0],
+    dtype=np.float32,
+)
+
+# Max allowed nose offset from the eye midpoint (normalized by the inter-eye
+# distance) before the face is considered too much in profile and skipped.
+# Increase to keep more faces, decrease to be stricter. Tune by inspecting crops.
+_YAW_MAX = 0.35
 
 
 def align_crop(image, listFace, method):
     """
-    aligns and cuts out the face.
+    Aligns and crops each detected face onto the ArcFace 112x112 template.
+
     Args:
-        image (numpy.ndarray): The input image in RGB format.
-        listFace (list): The raw object returned by MediaPipe library. Containing the native detection data, bounding boxes, and scores.
+        image (numpy.ndarray): The source image (RGB).
+        listFace: The raw detection object returned by MediaPipe.
+        method (str): "mtcnn" or "mediapipe".
 
     Returns:
-        tuple:
-            - face_final (numpy.ndarray): face align and crop in format RGB.
+        list[numpy.ndarray]: aligned 112x112 face crops, kept in the SAME color
+        space as the input image (RGB).
     """
     im_height, im_width = image.shape[:2]
     crops = []
-    if method == "mtcnn":
-        """Warning Not Functional"""
-        print("Warning : method ='mtcnn' in align_crop(... , method) is break")
-        for face in result:
-            kp = face['keypoints']
-            left_eye  = kp['left_eye']
-            right_eye = kp['right_eye']
-            box = face['box']
-
-
-            crop = _do_alignment(image, left_eye, right_eye, box)
-            crops.append(crop)
 
     if method == "mediapipe":
         for detection in listFace.detections:
             keypoints = detection.keypoints
-            bbox = detection.bounding_box
-           
-            # 1. On calcule d'abord la boîte de délimitation (sans appliquer l'échelle si elle a déjà été appliquée avant)
-            x, y, bw, bh = int(bbox.origin_x), int(bbox.origin_y), int(bbox.width), int(bbox.height)
-           
-            # 2. On ajoute une marge confortable (ex: 20%) pour ne pas couper le visage pendant la rotation
-            margin_x = int(bw * 0.2)
-            margin_y = int(bh * 0.2)
-           
-            crop_x1 = max(0, x - margin_x)
-            crop_y1 = max(0, y - margin_y)
-            crop_x2 = min(im_width, x + bw + margin_x)
-            crop_y2 = min(im_height, y + bh + margin_y)
 
+            # MediaPipe FaceDetector keypoints 0 and 1 are the two eyes,
+            # 2 = nose, 3 = mouth center.
+            eye_a = (keypoints[0].x * im_width, keypoints[0].y * im_height)
+            eye_b = (keypoints[1].x * im_width, keypoints[1].y * im_height)
+            nose  = (keypoints[2].x * im_width, keypoints[2].y * im_height)
+            mouth = (keypoints[3].x * im_width, keypoints[3].y * im_height)
 
-            # 3. ON ROGNE AVANT LA ROTATION (L'image passe de 1920x1080 à par exemple 200x200)
-            face_region = image[crop_y1:crop_y2, crop_x1:crop_x2]
-           
-            if face_region.size == 0:
+            # The eye with the smaller x maps to the LEFT template point.
+            # A similarity transform cannot mirror, so if we swapped them it
+            # would rotate 180 instead -> upside-down face -> bad embedding.
+            eye_left, eye_right = (eye_a, eye_b) if eye_a[0] <= eye_b[0] else (eye_b, eye_a)
+
+            # Frontality gate: skip strong profiles (half the face missing).
+            eye_mid_x = (eye_left[0] + eye_right[0]) / 2.0
+            eye_dist = float(np.hypot(eye_right[0] - eye_left[0],
+                                      eye_right[1] - eye_left[1]))
+            if eye_dist < 1.0:
+                continue
+            if abs(nose[0] - eye_mid_x) / eye_dist > _YAW_MAX:
                 continue
 
+            # Similarity transform from detected landmarks to ArcFace template.
+            src = np.array([eye_left, eye_right, nose, mouth], dtype=np.float32)
+            M, _ = cv2.estimateAffinePartial2D(src, _ARC_TEMPLATE_4)
+            if M is None:
+                continue
 
-            # 4. On ajuste les coordonnées des yeux pour qu'elles correspondent au petit crop
-            left_eye_px = (int(keypoints[0].x * im_width) - crop_x1, int(keypoints[0].y * im_height) - crop_y1)
-            right_eye_px = (int(keypoints[1].x * im_width) - crop_x1, int(keypoints[1].y * im_height) - crop_y1)
-
-
-            # 5. Calcul de l'angle
-            dY = right_eye_px[1] - left_eye_px[1]
-            dX = right_eye_px[0] - left_eye_px[0]
-            angle = np.degrees(np.arctan2(dY, dX))
-           
-            # 6. Rotation uniquement du petit patch (Très rapide, et INTER_LINEAR suffit amplement)
-            eye_center = ((left_eye_px[0] + right_eye_px[0]) / 2, (left_eye_px[1]  + right_eye_px[1]) / 2)
-            M = cv2.getRotationMatrix2D(eye_center, angle, scale=1.0)
-           
-            patch_h, patch_w = face_region.shape[:2]
-            rotated_patch = cv2.warpAffine(face_region, M, (patch_w, patch_h), flags=cv2.INTER_LINEAR)
-
-
-            # 7. Recadrage final pour enlever la marge (on recentre sur la taille d'origine du visage)
-            final_x1 = max(0, int(left_eye_px[0] - bw/2))
-            final_y1 = max(0, int(left_eye_px[1] - bh/2)) # Approximatif, basé sur les yeux
-           
-            # Pour faire simple et robuste, on utilise les dimensions originales bw, bh sur le centre des yeux rotatés
-            center_x, center_y = patch_w // 2, patch_h // 2
-            half_w, half_h = bw // 2, bh // 2
-           
-            face_final = rotated_patch[max(0, center_y - half_h):min(patch_h, center_y + half_h),
-                                       max(0, center_x - half_w):min(patch_w, center_x + half_w)]
-
-
-            # Redimensionnement et conversion pour ArcFace
-            if face_final.size > 0:
-                face_final = cv2.resize(face_final, (112, 112))
-                crops.append(face_final)
-
+            # Warp directly onto the 112x112 template (output stays RGB).
+            face_final = cv2.warpAffine(image, M, (112, 112), borderValue=0)
+            crops.append(face_final)
 
     return crops
-
-
-if __name__ == "__main__" :
-    model_path_blazeface='model/blaze_face_short_range.tflite'
-
-
-    base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
-    options = vision.FaceDetectorOptions(base_options=base_options)
-    my_global_detector = vision.FaceDetector.create_from_options(options)
-
-
-    with open("images/penche.jpg", "rb") as f:
-        image_bytes = f.read()
-
-
-    boxes, result, img_rgb = FacesDetects_from_bytes(image_bytes, method="mediapipe" , detector=my_global_detector # <-- L'ajout crucial est ici
-    )
-    align_crop(img_rgb , result)
-    print("TOto")
-
-
-
