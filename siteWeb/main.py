@@ -144,7 +144,7 @@ class CameraStream:
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
-
+ 
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
                 image_boxed = DrawBox(image_boxed, boxes_body, 'red',labels=labels)                
                 image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
@@ -175,7 +175,8 @@ class CameraStream:
 
             except Exception as e:
                 print(f"Erreur _ai_loop : {e}")
-                _, buf = cv2.imencode('.jpg', frame)
+                frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                _, buf = cv2.imencode('.jpg', frame_bgr)
                 with self.lock_out:
                     self.latest_frame = buf.tobytes()
 
