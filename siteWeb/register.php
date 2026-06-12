@@ -146,7 +146,7 @@
 
 </div>
 
-<script src="script.js"></script>
+<script src="assets/js/script.js"></script>
 <script>
 function switchMethod(method) {
     document.getElementById('panel-cam').style.display    = method === 'cam'    ? 'block' : 'none';
