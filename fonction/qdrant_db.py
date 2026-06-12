@@ -11,12 +11,12 @@ import os
 
 #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
 
-"""
+
 client = QdrantClient(host = os.getenv("qdrant_host" , 'localhost'),
                       port = int(os.getenv("Qdrant_port", 6333)),
                       prefer_grpc=True
                       )
-"""
+
 COLLECTION = "face"
 
 
