@@ -57,10 +57,11 @@ def delete_qdrant_vector(client: QdrantClient, collection_name: str, vector_id: 
 
 if __name__ == "__main__":
     qdrant_client = QdrantClient(host="localhost", port=6333)
-    CIBLE = "florient marchal" 
+    CIBLE = "test a" 
 
     COLLECTION_NAME = "face"
     TARGET_ID = "dbdad662-5575-4dcf-87c7-a156a8d96a5b"
-    delete_qdrant_vector(qdrant_client,COLLECTION_NAME , TARGET_ID)
+    #delete_qdrant_vector(qdrant_client,COLLECTION_NAME , TARGET_ID)
+    delete_qdrant_vector_byname(client,COLLECTION_NAME,CIBLE)
     
 

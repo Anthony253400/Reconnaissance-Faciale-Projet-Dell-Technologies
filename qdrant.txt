@@ -1,0 +1,7 @@
+{
+  "limit": 500,
+  "color_by": {
+    "payload": "name"
+  },
+  "algorithm": "TSNE"
+}

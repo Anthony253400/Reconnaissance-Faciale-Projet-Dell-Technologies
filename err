@@ -1,7 +1,347 @@
-{
-  "limit": 500,
-  "color_by": {
-    "payload": "name"
-  },
-  "algorithm": "TSNE"
+const MIRROR = true;        // front camera is mirrored
+
+
+async function init() {
+    await startWebcam();
+    startDetection();
 }
+
+// Start the webcam and feed it into the <video> element
+async function startWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: true, audio: false               // ← non forziamo la risoluzione
+        });
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        await new Promise(r => video.onloadedmetadata = r);  // ← aspetta le dimensioni vere
+    } catch (error) {
+        alert("Cannot access camera: " + error.message);
+    }
+}
+
+function startDetection() {
+    const video   = document.getElementById('webcam');
+    const overlay = document.getElementById('overlay');
+    const capture = document.getElementById('capture');
+    const ctxOver = overlay.getContext('2d');
+    const ctxCap  = capture.getContext('2d');
+
+    // use the camera's REAL aspect ratio, scaled down to ~640 wide for speed
+    const vw = video.videoWidth  || 640;
+    const vh = video.videoHeight || 480;
+    const scale = 640 / vw;
+    const SEND_W = Math.round(vw * scale);          // ← derived, not forced
+    const SEND_H = Math.round(vh * scale);
+
+    capture.width  = SEND_W;
+    capture.height = SEND_H;
+    overlay.width  = SEND_W;                          // ← set once, same space
+    overlay.height = SEND_H;
+
+    const ws = new WebSocket('ws://localhost:8000/ws/detect');
+
+    ws.onopen = () => { console.log("WebSocket connected"); sendFrame(); };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        ctxOver.clearRect(0, 0, overlay.width, overlay.height);
+
+        for (let i = 0; i < data.faces.length; i++) {
+            const [x1, y1, x2, y2] = data.faces[i];
+            const dX1 = MIRROR ? overlay.width - x2 : x1;
+            const dX2 = MIRROR ? overlay.width - x1 : x2;
+            const name  = data.names[i] || "";
+            const score = data.scores[i] || 0;
+            const color = score >= 0.70 ? "#10b981" : score >= 0.50 ? "#facc15" : "#9ca3af";
+            drawBox(ctxOver, dX1, y1, dX2 - dX1, y2 - y1, color,
+                    name && name !== "inconnu" ? `${name}  ${score.toFixed(2)}` : "inconnu");
+        }
+
+        for (let i = 0; i < data.body.length; i++) {
+            const [x1, y1, x2, y2] = data.body[i];
+            const dX1 = MIRROR ? overlay.width - x2 : x1;
+            const dX2 = MIRROR ? overlay.width - x1 : x2;
+            drawBox(ctxOver, dX1, y1, dX2 - dX1, y2 - y1, "#ef4444",
+                    data.body_names[i] || "");
+        }
+
+        sendFrame();
+    };
+
+    ws.onclose = () => console.log("WebSocket disconnected");
+    ws.onerror = (e) => console.error("WebSocket error:", e);
+
+    function sendFrame() {
+        if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount === 0) {
+            ctxCap.drawImage(video, 0, 0, capture.width, capture.height);
+            capture.toBlob((blob) => { if (blob) ws.send(blob); }, 'image/jpeg', 0.8);
+        }
+    }
+}
+
+// draw one box with a filled label tag (canvas handles accents natively)
+function drawBox(ctx, x, y, w, h, color, label) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+
+    if (label) {
+        ctx.font = "16px Arial";
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y - 22, tw + 12, 22);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, x + 6, y - 6);
+    }
+}
+
+init();
+from unicodedata import name
+
+import cv2
+import sys
+import time
+import numpy as np
+
+sys.path.append('../')
+
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
+from typing import List
+from qdrant_client import QdrantClient
+from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList, Filter, FieldCondition, MatchValue
+
+from fonction.loadModel import load_model
+from fonction.faceDetection import FacesDetects_from_frame
+from fonction.faceAlignment import align_crop
+from fonction.faceEmbeddings import get_embedding
+from fonction.qdrant_db import save_embedding, create_collection, search_embedding
+from fonction.bodyDetection import BodyDetect_from_frame
+from fonction.tracker import BodyTracker
+from fonction.bodyAlignment import body_crop
+from fonction.identity_smoother import SmootherBank
+
+COLLECTION = 'face'
+app = FastAPI()
+
+# Models (loaded once at startup)
+model_mediapipe = load_model("blazeface_short", False)
+model_arcface   = load_model("arcface", True)
+model_yolo      = load_model("yolo", True)
+
+create_collection()   # ensure the 'face' collection exists
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================================
+#  WebSocket detection endpoint (browser owns the webcam, server only runs AI)
+# ============================================================================
+@app.websocket("/ws/detect")
+async def ws_detect(websocket: WebSocket):
+    await websocket.accept()
+    print("[ws/detect] client connected")
+
+    # per-connection state, so identities reset when the page is reopened
+    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, max_lost_frames=90)
+    smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
+
+    try:
+        while True:
+            # 1. receive one JPEG frame (bytes) from the browser
+            data = await websocket.receive_bytes()
+
+            # 2. decode JPEG -> RGB numpy
+            arr = np.frombuffer(data, np.uint8)
+            frame_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            if frame_bgr is None:
+                continue
+            frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+
+            # 3. detection
+            boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
+            boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
+
+            # 4. recognize each face
+            names, scores, clean_names = [], [], []
+            if result and result.detections:
+                crops = align_crop(frame, result, "mediapipe")
+                for i, face_cropped in enumerate(crops):
+                    embedding = get_embedding(face_cropped, model_arcface)
+                    raw_name, raw_score = search_embedding(embedding)
+                    name, score = smoothers.update(i, raw_name, raw_score)
+
+                    clean = name if (name and name != "unknown") else ""
+                    clean_names.append(clean)
+                    names.append(clean if clean else "inconnu")
+                    scores.append(round(float(score), 2) if score is not None else 0.0)
+                smoothers.prune(len(boxes_face))
+
+            # align_crop may drop profile faces: pad to keep lists aligned with boxes_face
+            while len(names) < len(boxes_face):
+                names.append("inconnu")
+                scores.append(0.0)
+                clean_names.append("")
+
+            # 5. body tracking
+            crops_body = body_crop(frame, boxes_body) if boxes_body else []
+            body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
+
+            # 6. reply with a small JSON
+            await websocket.send_json({
+                "faces":      [[int(v) for v in b] for b in boxes_face],
+                "names":      names,
+                "scores":     scores,
+                "body":       [[int(v) for v in b] for b in boxes_body],
+                "body_names": body_names,
+            })
+
+    except WebSocketDisconnect:
+        print("[ws/detect] client disconnected")
+    except Exception as e:
+        print(f"[ws/detect] error: {e}")
+        await websocket.close()
+
+
+# ============================================================================
+#  Register a person
+# ============================================================================
+@app.post("/add")
+async def add_person(
+    firstName: str = Form(...),
+    lastName:  str = Form(...),
+    photos:    List[UploadFile] = File(...)
+):
+    print(f"\n[/add] start: {firstName} {lastName} | {len(photos)} frames")
+    t_start = time.perf_counter()
+
+    saved = 0
+    name = f"{firstName} {lastName}".strip().lower()
+    client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+
+
+    for i, photo in enumerate(photos):
+        contents = await photo.read()
+        try:
+            # decode uploaded bytes -> RGB (same color path as detection)
+            arr = np.frombuffer(contents, np.uint8)
+            image_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            if image_bgr is None:
+                continue
+            image = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+
+            boxes_face, result, image = FacesDetects_from_frame(
+                image, "mediapipe", model_mediapipe)
+            if not result or not result.detections:
+                continue
+
+            crops = align_crop(image, result, "mediapipe")
+            if not crops:
+                continue
+
+            embedding = get_embedding(crops[0], model_arcface)
+
+            save_embedding( name, embedding , client ,COLLECTION)
+            saved += 1
+
+        except Exception as e:
+            print(f"[/add] skipped frame {i}: {e}")
+            continue
+
+    if saved == 0:
+        return Response(status_code=422, content="No valid frames found.")
+
+    print(f"[/add] {saved}/{len(photos)} embeddings saved | "
+          f"{(time.perf_counter() - t_start) * 1000:.1f} ms")
+    return {"status": "ok", "frames_used": saved, "total_frames": len(photos)}
+
+
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+
+from collections import deque, Counter
+
+
+class IdentitySmoother:
+    """
+    Stabilizza nome E score visualizzati per un volto.
+
+    Nome  : voto a maggioranza con isteresi — per cambiare nome servono
+            `min_votes` voti a favore del nuovo nella finestra.
+    Score : media mobile esponenziale (EMA), ma il valore MOSTRATO viene
+            aggiornato solo ogni `score_hold` riconoscimenti → il numero
+            resta fermo a schermo invece di ballare a ogni ciclo.
+    """
+
+    def __init__(self, window=20, min_votes=10, min_score=0.45,
+                 score_alpha=0.10, score_hold=15):
+        self.window = window
+        self.min_votes = min_votes
+        self.min_score = min_score
+        self.score_alpha = score_alpha   # peso del nuovo score nell'EMA
+        self.score_hold = score_hold     # ogni quanti voti rinfrescare il display
+
+        self.votes = deque(maxlen=window)
+        self.stable_name = None
+        self._ema = None                 # score interno, aggiornato sempre
+        self._shown = None               # score mostrato, aggiornato raramente
+        self._since_refresh = 0
+
+    def update(self, raw_name, raw_score):
+        vote = raw_name if (raw_name and raw_score is not None
+                            and raw_score >= self.min_score) else None
+        self.votes.append(vote)
+
+        counts = Counter(v for v in self.votes if v is not None)
+        if counts:
+            best, n = counts.most_common(1)[0]
+            if best != self.stable_name and n >= self.min_votes:
+                self.stable_name = best
+                self._ema = raw_score if vote == best else None
+                self._shown = self._ema
+                self._since_refresh = 0
+        elif len(self.votes) == self.window:
+            # nessun voto valido in tutta la finestra → identità persa
+            self.stable_name = None
+            self._ema = self._shown = None
+
+        # EMA interna: segue lo score reale ma lentamente
+        if vote == self.stable_name and vote is not None:
+            self._ema = (raw_score if self._ema is None
+                         else self.score_alpha * raw_score
+                              + (1 - self.score_alpha) * self._ema)
+
+        # rinfresca il valore mostrato solo ogni score_hold voti
+        self._since_refresh += 1
+        if self._since_refresh >= self.score_hold and self._ema is not None:
+            self._shown = self._ema
+            self._since_refresh = 0
+        if self._shown is None:
+            self._shown = self._ema
+
+        return self.stable_name, self._shown
+
+
+class SmootherBank:
+    """Uno smoother per volto (indicizzato per posizione — vedi nota multi-persona)."""
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.smoothers = {}
+
+    def update(self, face_idx, raw_name, raw_score):
+        if face_idx not in self.smoothers:
+            self.smoothers[face_idx] = IdentitySmoother(**self.kwargs)
+        return self.smoothers[face_idx].update(raw_name, raw_score)
+
+    def prune(self, n_faces):
+        self.smoothers = {k: v for k, v in self.smoothers.items() if k < n_faces}
+
+        
