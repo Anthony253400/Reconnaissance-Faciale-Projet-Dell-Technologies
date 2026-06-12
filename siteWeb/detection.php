@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Face Recognition — Detect</title>
     <link rel="stylesheet" href="style.css">
+
+    <script src="navbar.js"></script>
+
     <style>
 :root {
   --bg:           #f4f4f1;
