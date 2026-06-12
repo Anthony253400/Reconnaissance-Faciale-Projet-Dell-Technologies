@@ -20,9 +20,11 @@
 
 
         .steps-section {
+        
             padding: 5rem 1.5rem;
             max-width: 1100px;
             margin: 0 auto;
+            
         }
         .steps-grid {
             display: grid;
@@ -181,6 +183,7 @@
 
 
             </div>
+        </section>
 
         <?php /*  
         </section>
@@ -217,8 +220,6 @@
         </div>
 
         */;?>
-        
-        <div class="home-divider"></div>
 
 
         <div class="home-divider"></div>
@@ -257,6 +258,7 @@
             </div>
         </div>
 
+        <? php /*
         <div class="home-divider"></div>
 
         <div class="cta-grid">
@@ -277,6 +279,7 @@
                 <a href="statistics.php" class="btn btn-secondary">View Evaluation Statistics</a>
             </div>
         </div>
+        */;?>
 
 
 
