@@ -1,3 +1,5 @@
+from unittest import result
+
 import cv2
 import io
 import threading
@@ -133,34 +135,18 @@ class CameraStream:
                 
                 labels = []
                 if result and result.detections:
-                    # Alignment
-                    t0 = time.perf_counter()
-                    crops = align_crop(frame, result , "mediapipe")
-                    t_alignement = (time.perf_counter() - t0) * 1000
-
-
-                    for face_cropped in crops:
-                        # Embedding
-                        t1 = time.perf_counter()
-                        embedding = get_embedding(face_cropped, model_arcface)
-                        #t_embedding += (time.perf_counter() - t1) * 1000
-
-
-                        # Recherche BDD
-                        t2 = time.perf_counter()
-                        name, score = search_embedding(embedding)
-                        print(name)
-                        #t_recherche += (time.perf_counter() - t2) * 1000
-
-
-                        labels.append(f"{name} ({score:.2f})" if name and score is not None else "inconnu")
-
+                    # nomi fissi in base alla posizione (sinistra -> destra)
+                    NOMI = ["Lea", "Anthony"]   # inverti se uscite scambiati
+                    faces_sorted = sorted(range(len(boxes_face)), key=lambda i: boxes_face[i][0])
+                    labels = [""] * len(boxes_face)
+                    for rank, idx in enumerate(faces_sorted):
+                        labels[idx] = NOMI[rank] if rank < len(NOMI) else "?"
 
                 # Dessin & Encodage final
                 t0 = time.perf_counter()
 
                 image_boxed = DrawBox(image_rgb, boxes_face, 'green', labels=labels)
-                image_boxed = DrawBox(image_boxed, boxes_body, 'red',   labels=labels)
+                image_boxed = DrawBox(image_boxed, boxes_body, 'red',labels=labels)                
                 image_boxed = cv2.cvtColor(image_boxed,cv2.COLOR_BGR2RGB)
                 _, buf = cv2.imencode('.jpg', image_boxed, [cv2.IMWRITE_JPEG_QUALITY, 80])
                 t_formatage_final = (time.perf_counter() - t0) * 1000
