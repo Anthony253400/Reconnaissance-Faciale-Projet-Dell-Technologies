@@ -151,40 +151,38 @@
             </div>
          
             <div class="steps-grid">
-                <div class="step-card">
+                <a href="register.php" class="step-card">
+                    
                     <div class="step-icon-wrap">
                             <i class="ti ti-user-plus"></i>
                         <span class="step-number">1</span>
                     </div>
                     <h4>Register</h4>
                     <p>Add a person to the database using your webcam or by uploading a photo. The system captures multiple angles for better accuracy.</p>
-                    <a href="register.html" class="btn-step">Register a person</a>
-                </div>
-         
-                <div class="step-card">
+                </a>
+
+                <a href="detection.php"  class="step-card">
                     <div class="step-icon-wrap">
                         <i class="ti ti-scan"></i>
                         <span class="step-number">2</span>
                     </div>
                     <h4>Detect</h4>
                     <p>Point your webcam at any registered person. The AI identifies faces in real time and displays the match with a confidence score.</p>
-                    <a href="detect.html" class="btn-step">Start detecting</a>
-                </div>
+                </a>
          
-                <div class="step-card">
+                <a href="manage.php" class="step-card">
                     <div class="step-icon-wrap">
                         <i class="ti ti-database"></i>
                         <span class="step-number">3</span>
                     </div>
                     <h4>Manage</h4>
                     <p>Browse the database of registered people, remove entries, or update records. Keep control over who the system can recognize.</p>
-                    <a href="manage.html" class="btn-step">Manage database</a>
-                </div>
+                </a>
 
 
             </div>
 
-
+        <?php /*  
         </section>
             <div class="hiw-list">
                 <div class="hiw-item">
@@ -217,6 +215,11 @@
                 </div>
             </div>
         </div>
+
+        */;?>
+        
+        <div class="home-divider"></div>
+
 
         <div class="home-divider"></div>
 

@@ -17,8 +17,10 @@ body {
   padding-right: 1.25rem;
 }
 
-/* SCANNER*/
-
+a{
+  color:#000;
+  text-decoration: none ;
+}
 
 
 /* ── Container ── */
