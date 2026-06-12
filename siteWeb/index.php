@@ -12,10 +12,13 @@
     <script src="assets/js/scanner.js"></script>
     <script src="assets/js/navbar.js"></script>
 
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont/dist/tabler-icons.min.css">
 
 
     <style>
+        @import url('assets/css/variables/variables.css');
+
+
         .steps-section {
             padding: 5rem 1.5rem;
             max-width: 1100px;
@@ -24,7 +27,7 @@
         .steps-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
+            gap: 5rem;
             position: relative;
         }
  
@@ -51,11 +54,13 @@
             transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
             position: relative;
             z-index: 1;
+        
         }
         .step-card:hover {
-            box-shadow: 0 8px 28px rgba(0,118,206,0.12);
+            box-shadow: 0 8px 28px rgb(var(--dell-blue) / 0.6);
             transform: translateY(-4px);
-            border-color: var(--blue-mid);
+            border-color: var(--dell-blue);
+            background: color-mix(in srgb, var(--dell-blue-soft) 50%, transparent);        
         }
         .step-icon-wrap {
             width: 64px; height: 64px;
@@ -148,7 +153,7 @@
             <div class="steps-grid">
                 <div class="step-card">
                     <div class="step-icon-wrap">
-                        <i class="fa-solid fa-user-plus"></i>
+                            <i class="ti ti-user-plus"></i>
                         <span class="step-number">1</span>
                     </div>
                     <h4>Register</h4>
@@ -158,7 +163,7 @@
          
                 <div class="step-card">
                     <div class="step-icon-wrap">
-                        <i class="fa-solid fa-camera"></i>
+                        <i class="ti ti-scan"></i>
                         <span class="step-number">2</span>
                     </div>
                     <h4>Detect</h4>
@@ -168,24 +173,18 @@
          
                 <div class="step-card">
                     <div class="step-icon-wrap">
-                        <i class="fa-solid fa-sliders"></i>
+                        <i class="ti ti-database"></i>
                         <span class="step-number">3</span>
                     </div>
                     <h4>Manage</h4>
                     <p>Browse the database of registered people, remove entries, or update records. Keep control over who the system can recognize.</p>
                     <a href="manage.html" class="btn-step">Manage database</a>
                 </div>
-         
-                <div class="step-card">
-                    <div class="step-icon-wrap">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span class="step-number">4</span>
-                    </div>
-                    <h4>Privacy</h4>
-                    <p>Understand how your data is used. All processing happens locally. Read the full privacy policy before registering anyone.</p>
-                    <a href="privacy.html" class="btn-step">Read the policy</a>
-                </div>
+
+
             </div>
+
+
         </section>
             <div class="hiw-list">
                 <div class="hiw-item">
