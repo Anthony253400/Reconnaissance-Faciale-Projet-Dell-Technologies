@@ -9,6 +9,8 @@
 
 
     <script src="assets/js/navbar.js"></script>
+    <script src="assets/js/detection.js"></script>
+
 
     <style>
         .detection-wrapper {
@@ -62,6 +64,5 @@
 
 </div>
 
-<script src="detection.js"></script>
 </body>
 </html>
