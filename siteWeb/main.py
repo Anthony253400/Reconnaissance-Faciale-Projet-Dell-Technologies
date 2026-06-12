@@ -43,126 +43,129 @@ app.add_middleware(
 )
 
 
-# ============================================================================
-#  WebSocket detection endpoint (browser owns the webcam, server only runs AI)
-# ============================================================================
+class ClientInferenceNode:
+    """
+    Unité de traitement asynchrone assignée à une cible (client) spécifique.
+    Sépare la réception réseau à haute fréquence de l'inférence IA plus lente.
+    """
+    def __init__(self):
+        self.lock_raw = threading.Lock()
+        self.lock_out = threading.Lock()
+
+        self.raw_frame = None
+        self.latest_telemetry = {
+            "faces": [], "names": [], "scores": [],
+            "body": [], "body_names": []
+        }
+        self.running = True
+
+        # Trackers et lisseurs isolés pour ce client
+        self.tracker = BodyTracker(iou_threshold=0.1, max_distance=80, max_lost_frames=90)
+        self.smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
+
+        # Déploiement du thread d'analyse
+        self._thread = threading.Thread(target=self._ai_loop, daemon=True)
+        self._thread.start()
+
+    def update_frame(self, frame_bytes):
+        """Décode et stocke la dernière trame optique reçue."""
+        arr = np.frombuffer(frame_bytes, np.uint8)
+        frame_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if frame_bgr is not None:
+            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            with self.lock_raw:
+                self.raw_frame = frame_rgb
+
+    def get_telemetry(self):
+        """Exfiltre les dernières coordonnées identifiées."""
+        with self.lock_out:
+            return self.latest_telemetry
+
+    def stop(self):
+        """Termine proprement les opérations du thread."""
+        self.running = False
+        self._thread.join(timeout=1.0)
+
+    def _ai_loop(self):
+        """Boucle d'inférence principale. Tourne à sa propre fréquence."""
+        while self.running:
+            with self.lock_raw:
+                frame = self.raw_frame
+
+            # Si aucune donnée, on temporise pour préserver le CPU
+            if frame is None:
+                time.sleep(0.01)
+                continue
+
+            try:
+                # 1. Détection des cibles
+                boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
+                boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
+
+                # 2. Extraction et identification
+                names, scores, clean_names = [], [], []
+                if result and result.detections:
+                    crops = align_crop(frame, result, "mediapipe")
+                    for i, face_cropped in enumerate(crops):
+                        embedding = get_embedding(face_cropped, model_arcface)
+                        raw_name, raw_score = search_embedding(embedding)
+                        name, score = self.smoothers.update(i, raw_name, raw_score)
+
+                        clean = name if (name and name != "unknown") else ""
+                        clean_names.append(clean)
+                        names.append(clean if clean else "inconnu")
+                        scores.append(round(float(score), 2) if score is not None else 0.0)
+                    self.smoothers.prune(len(boxes_face))
+
+                # Alignement des listes si des visages de profil ont été ignorés
+                while len(names) < len(boxes_face):
+                    names.append("inconnu")
+                    scores.append(0.0)
+                    clean_names.append("")
+
+                # 3. Suivi dynamique des corps
+                crops_body = body_crop(frame, boxes_body) if boxes_body else []
+                body_names = self.tracker.update(boxes_face, boxes_body, clean_names, crops_body)
+
+                # 4. Verrouillage et mise à jour de la télémétrie
+                with self.lock_out:
+                    self.latest_telemetry = {
+                        "faces": [[int(v) for v in b] for b in boxes_face],
+                        "names": names,
+                        "scores": scores,
+                        "body": [[int(v) for v in b] for b in boxes_body],
+                        "body_names": body_names,
+                    }
+
+            except Exception as e:
+                print(f"[Thread IA] Erreur d'inférence : {e}")
+                time.sleep(0.05)
+
+
 @app.websocket("/ws/detect")
 async def ws_detect(websocket: WebSocket):
     await websocket.accept()
-    print("[ws/detect] client connected")
+    print("[Opérationnel] Liaison client établie.")
 
-    # per-connection state, so identities reset when the page is reopened
-    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, max_lost_frames=90)
-    smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
+    # Attribution d'un nœud d'inférence dédié
+    node = ClientInferenceNode()
 
     try:
         while True:
-            # 1. receive one JPEG frame (bytes) from the browser
+            # 1. Réception de la trame brute
             data = await websocket.receive_bytes()
+            node.update_frame(data)
 
-            # 2. decode JPEG -> RGB numpy
-            arr = np.frombuffer(data, np.uint8)
-            frame_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            if frame_bgr is None:
-                continue
-            frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-
-            # 3. detection
-            boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
-            boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
-
-            # 4. recognize each face
-            names, scores, clean_names = [], [], []
-            if result and result.detections:
-                crops = align_crop(frame, result, "mediapipe")
-                for i, face_cropped in enumerate(crops):
-                    embedding = get_embedding(face_cropped, model_arcface)
-                    raw_name, raw_score = search_embedding(embedding)
-                    name, score = smoothers.update(i, raw_name, raw_score)
-
-                    clean = name if (name and name != "unknown") else ""
-                    clean_names.append(clean)
-                    names.append(clean if clean else "inconnu")
-                    scores.append(round(float(score), 2) if score is not None else 0.0)
-                smoothers.prune(len(boxes_face))
-
-            # align_crop may drop profile faces: pad to keep lists aligned with boxes_face
-            while len(names) < len(boxes_face):
-                names.append("inconnu")
-                scores.append(0.0)
-                clean_names.append("")
-
-            # 5. body tracking
-            crops_body = body_crop(frame, boxes_body) if boxes_body else []
-            body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
-
-            # 6. reply with a small JSON
-            await websocket.send_json({
-                "faces":      [[int(v) for v in b] for b in boxes_face],
-                "names":      names,
-                "scores":     scores,
-                "body":       [[int(v) for v in b] for b in boxes_body],
-                "body_names": body_names,
-            })
+            # 2. Renvoi immédiat du dernier JSON (aucune attente de l'IA)
+            telemetry = node.get_telemetry()
+            await websocket.send_json(telemetry)
 
     except WebSocketDisconnect:
-        print("[ws/detect] client disconnected")
+        print("[Terminé] Rupture de la liaison cible.")
+        node.stop()
     except Exception as e:
-        print(f"[ws/detect] error: {e}")
+        print(f"[Alerte] Erreur de communication : {e}")
+        node.stop()
         await websocket.close()
-
-
-# ============================================================================
-#  Register a person
-# ============================================================================
-@app.post("/add")
-async def add_person(
-    firstName: str = Form(...),
-    lastName:  str = Form(...),
-    photos:    List[UploadFile] = File(...)
-):
-    print(f"\n[/add] start: {firstName} {lastName} | {len(photos)} frames")
-    t_start = time.perf_counter()
-
-    saved = 0
-    name = f"{firstName} {lastName}".strip().lower()
-    client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-
-
-    for i, photo in enumerate(photos):
-        contents = await photo.read()
-        try:
-            # decode uploaded bytes -> RGB (same color path as detection)
-            arr = np.frombuffer(contents, np.uint8)
-            image_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            if image_bgr is None:
-                continue
-            image = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-
-            boxes_face, result, image = FacesDetects_from_frame(
-                image, "mediapipe", model_mediapipe)
-            if not result or not result.detections:
-                continue
-
-            crops = align_crop(image, result, "mediapipe")
-            if not crops:
-                continue
-
-            embedding = get_embedding(crops[0], model_arcface)
-
-            save_embedding( name, embedding , client ,COLLECTION)
-            saved += 1
-
-        except Exception as e:
-            print(f"[/add] skipped frame {i}: {e}")
-            continue
-
-    if saved == 0:
-        return Response(status_code=422, content="No valid frames found.")
-
-    print(f"[/add] {saved}/{len(photos)} embeddings saved | "
-          f"{(time.perf_counter() - t_start) * 1000:.1f} ms")
-    return {"status": "ok", "frames_used": saved, "total_frames": len(photos)}
-
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")
