@@ -14,6 +14,7 @@ from fastapi.responses import Response
 from typing import List
 from qdrant_client import QdrantClient
 from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList, Filter, FieldCondition, MatchValue
+import threading
 
 from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
