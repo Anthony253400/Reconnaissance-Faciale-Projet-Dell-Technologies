@@ -2,7 +2,9 @@
 
 .footer {
   border-top: 1px solid var(--border);
-  padding-top: 1.25rem;
+  margin-top: 1.5rem;        /* etait 3rem */
+  padding-top: 0.85rem;      /* etait 1.25rem */
+  padding-bottom: 0.85rem;   /* etait 1.5rem */
   text-align: center;
 }
 
@@ -10,4 +12,34 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   font-weight: 300;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ── Footer links — petits boutons ── */
+.footer-links {
+  display: inline-flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;        /* etait 1rem */
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+  padding: 4px 13px;         /* un poil plus compact */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+
+.footer-links a:hover {
+  color: var(--dell-blue) !important;
+  border-color: var(--dell-blue);
+  background: var(--dell-blue-bg);
 }

@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition — Register</title>
+    <title>Face Recognition  Register</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/navbar.css">
     <link rel="stylesheet" href="assets/css/footer.css">
 
     <script src="assets/js/navbar.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/footer.js"></script>
+
 
 </head>
 <body>
@@ -45,19 +48,20 @@
     <div class="section-card">
         <h2>How to use</h2>
         <ol class="steps-list">
-            <li><strong>Choose a method:</strong> we highly recommend using the webcam for better recognition accuracy. Upload from your device is available as an alternative.</li>
-            <li><strong>Webcam:</strong> press the button and slowly move your head left, right, up and down. Keep your face centered and well lit.</li>
-            <li><strong>Upload:</strong> select a clear, front-facing photo with good lighting. Recognition may be less accurate.</li>
-            <li><strong>Fill in the name:</strong> enter the first and last name of the person to register.</li>
-            <li><strong>Accept the privacy policy</strong>and click "Add to database". Then go to Detect to test recognition.</li>
+            <li><strong>Allow camera access:</strong> when your browser asks, click "Allow". You should see yourself in the video below.</li>
+            <li><strong>Center your face:</strong> position yourself so your face fills the middle of the frame, with good, even lighting and no strong backlight.</li>
+            <li><strong>Press the round button to start.</strong> A 3-second countdown will appear, so get ready.</li>
+            <li><strong>Move your head slowly</strong> during the recording (about 5 seconds): turn left, then right, then look up and down. This lets us capture your face from every angle for better recognition.</li>
+            <li><strong>Fill in the name:</strong> enter the first and last name of the person being registered.</li>
+            <li><strong>Accept the privacy policy</strong> and click "Add to database". Then go to Detect page to test recognition.</li>
         </ol>
     </div>
 
     <!-- SENDING METHOD -->
     <div class="section-card">
-        <h2>Choose a method</h2>
+        <h2>Registration</h2>
 
-        <div class="method-toggle">
+<!--        <div class="method-toggle">
             <button class="method-btn active" id="btn-cam" onclick="switchMethod('cam')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
                 Use webcam  (Recommended)
@@ -69,14 +73,14 @@
             </button>
             */ ;?>
         </div>
-
+-->
         <!-- WEBCAM PANEL -->
         <div id="panel-cam">
             <div class="webcam-wrapper">
                 <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
                 <div class="cam-overlay">
                     <div class="cam-overlay-top">
-                        <p class="cam-instruction-overlay">Press the button below, start recording and move your head in all directions</p>
+                        <p class="cam-instruction-overlay">Press the button, wait for the countdown, then turn your head left, right, up and down (5 sec)</p>
                         <p class="cam-step-overlay" id="progress"></p>
                     </div>
                     <div id="countdown-overlay" style="display:none; position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none;">

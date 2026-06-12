@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="assets/css/footer.css">
 
     <script src="assets/js/navbar.js"></script>
-
+    <script src="assets/js/footer.js"></script>
 </head>
 <body>
     <?php include("components/navbar.php") ;?>

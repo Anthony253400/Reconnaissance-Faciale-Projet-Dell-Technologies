@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition — Home</title>
+    <title>Face Recognition  Home</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/navbar.css">
     <link rel="stylesheet" href="assets/css/footer.css">
@@ -139,8 +139,11 @@
 
         <div class="home-section">
             <p class="section-label">About the project</p>
-            <p class="home-text">This application was built as part of a curricular internship at Dell Technologies Montpellier. The goal: recognise people in real time using only a webcam.</p>
-            <p class="home-text">You register someone once by recording their face for a few seconds. From then on, the camera can identify them automatically.</p>
+            <p class="home-text">This application was built by two MIASHS students at Paul Valéry University in Montpellier, Anthony Miranda and Lea Carminati,
+            as part of a curricular internship at Dell Technologies Montpellier. 
+            The goal: to recognise people in real time using only a webcam.
+            You register someone once by recording their face for a few seconds. From then on, the camera can identify them automatically.</p>
+            <p class="home-text">The project is a technical demonstration it is not intended to be deployed as a production-ready application, but rather to showcase the underlying face recognition pipeline..</p>
         </div>
 
         <div class="home-section">
@@ -258,7 +261,7 @@
             </div>
         </div>
 
-        <? php /*
+        <?php /*
         <div class="home-divider"></div>
 
         <div class="cta-grid">
@@ -281,12 +284,10 @@
         </div>
         */;?>
 
-
-
     </div>
 
-    <?php include("components/footer.php") ;?>
-
 </div>
+<?php include("components/footer.php") ;?>
+
 </body>
 </html>

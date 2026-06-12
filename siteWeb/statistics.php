@@ -1,30 +1,41 @@
+<?php $current = "statistics"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Model Evaluation Statistics</title>
+  <title>Face Recognition — Statistics</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/navbar.css">
+  <link rel="stylesheet" href="assets/css/footer.css">
+
 
   <script src="assets/js/navbar.js"></script>
-
+  <script src="assets/js/footer.js"></script>
 
 <style>
+  /* couleurs propres aux graphiques (gardees pour Chart.js) */
   :root {
     --blue:#0076CE; --orange:#e67e22; --green:#16a34a; --red:#dc3545; --muted:#888884;
-    --surface:#ffffff; --bg:#f4f4f1; --border:#e4e4e0; --text:#1a1a1a;
   }
-  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; }
-  .stats-wrap { max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:1.25rem; padding:1rem; }
-  .stats-card { background:var(--surface); border:1px solid var(--border); border-radius:12px;
-                box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04); padding:1.5rem; }
-  .stats-card h1 { font-size:1.4rem; font-weight:600; margin:0 0 .6rem; }
-  .stats-card h2 { font-size:1.1rem; font-weight:600; margin:0 0 .4rem; }
+
+  /* on s'aligne sur les autres pages : meme largeur que .container, memes cartes */
+  .stats-wrap { display:flex; flex-direction:column; gap:1.25rem; }
+
+  /* titres internes des cartes, alignes sur le style global */
+  .stats-card h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 .5rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-transform: none;   /* annule le h2 minuscule/gris de style.css */
+  }
   .stats-card p  { color:#555; font-size:.93rem; line-height:1.6; margin:0 0 .4rem; }
   .stats-card .takeaway { background:#f0f7fc; border-left:3px solid var(--blue); padding:.6rem .9rem;
                 border-radius:0 6px 6px 0; font-size:.9rem; color:#333; margin:.7rem 0 0; }
   .stats-card img { width:100%; height:auto; }
+
   table.metrics { width:100%; border-collapse:collapse; font-size:.92rem; margin-top:.5rem; }
   table.metrics th, table.metrics td { border:1px solid var(--border); padding:.55rem .75rem; text-align:left; }
   table.metrics th { background:var(--bg); font-weight:600; }
@@ -32,135 +43,153 @@
   table.metrics .good { color:var(--green); font-weight:600; }
   table.metrics .bad  { color:var(--red); font-weight:600; }
   .chart-box { position:relative; }
-  .back-link { display:inline-block; margin-bottom:.5rem; color:var(--blue); text-decoration:none; font-size:.9rem; }
-  .back-link:hover { text-decoration:underline; }
   .note { font-size:.82rem; color:var(--muted); font-style:italic; margin-top:.5rem; }
   .legend-inline { font-size:.82rem; color:#666; margin-top:.3rem; }
+
+  /* deux cartes cote a cote */
+  .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; align-items:stretch; }
+  .stats-row > .stats-card { margin:0; }
+  @media (max-width:900px) {
+    .stats-row { grid-template-columns:1fr; }
+  }
 </style>
 </head>
 <body>
 
-<?php include("<components/navbar.php"); ?>
+<?php include("components/navbar.php"); ?>
 
-<div class="stats-wrap">
+<div class="container">
 
-  <div class="stats-card">
+  <header class="page-header">
     <h1>Model Evaluation</h1>
-    <p>This page shows how well the face-recognition system actually works, tested on two very
-    different sets of photos. The first is our own <strong>custom set</strong>, taken on purpose
-    under hard conditions: masks, hats, sunglasses, side views and poor lighting. The second is
-    <strong>LFW</strong>, a well-known public set of clean, front-facing photos that researchers
-    use as a common reference.</p>
-    <p>The point is not to pick a winner, since the two sets are not comparable in size or difficulty.
-    LFW tells us whether the system is <em>built correctly</em>, while the custom set tells us how it
-    <em>copes with real, messy conditions</em>. The gap between the two is what we actually want
-    to measure.</p>
-    <div class="takeaway">In one line: on clean photos the system is reliable (EER 5.6%), and on
-    deliberately hard photos it degrades (EER 26%). That contrast, not either number on its own,
-    is the result.</div>
-  </div>
+    <p class="subtitle">How well the system performs, tested on clean and on deliberately hard photos</p>
+  </header>
 
-  <div class="stats-card">
-    <h2>The headline numbers</h2>
-    <p>A few standard measures, side by side. <strong>EER</strong> is the error rate at the point
-    where wrongly-accepted impostors and wrongly-rejected real users are balanced, where lower is
-    better. <strong>AUC</strong> rates the overall ability to separate the two, where 1.0 is perfect and
-    0.5 is a coin toss. <strong>d&prime;</strong> is how far apart the "same person" and "different
-    person" scores sit, where higher is better. <strong>TAR @ FAR&le;1%</strong> answers the practical
-    question "if we only tolerate 1 impostor in 100 getting through, how many real users do we
-    still recognise?". The brackets are 95% confidence intervals: how much each number could
-    shift given how many photos we tested on.</p>
-    <table class="metrics">
-      <tr><th>Metric</th><th>Custom (hard conditions)</th><th>LFW (benchmark)</th></tr>
-      <tr><td>Real-user attempts</td><td>89</td><td>917</td></tr>
-      <tr><td>Impostor attempts</td><td>16</td><td>298</td></tr>
-      <tr><td>EER (95% CI)</td><td class="bad">26.0% [18.9, 43.2]</td><td class="good">5.6% [3.7, 7.0]</td></tr>
-      <tr><td>AUC</td><td>0.638</td><td>0.979</td></tr>
-      <tr><td>d&prime; (separability)</td><td>0.67</td><td>3.45</td></tr>
-      <tr><td>TAR @ FAR&le;1%</td><td>n/a*</td><td class="good">87.7% (thr 0.6)</td></tr>
-      <tr><td>Decision threshold</td><td>0.36</td><td>0.55</td></tr>
-    </table>
-    <p class="note">*With only 16 impostors, the false-accept rate can only change in jumps of
-    about 6%. A budget as tight as 1% can only be reached by setting the threshold so high
-    that no real user is accepted either, so this number is not meaningful for the custom set.
-    This limitation disappears with LFW's 298 impostors.</p>
-  </div>
+  <div class="stats-wrap">
 
-  <div class="stats-card">
-    <h2>How confident are these numbers?</h2>
-    <p>This is the single most important chart on the page. Each bar is the EER (lower is better);
-    the thin line on top is the 95% confidence interval. LFW's bar is low <em>and</em> its line is
-    short, because we tested on over a thousand photos, so the number is trustworthy. The custom bar is
-    high <em>and</em> its line is long, because with only about a hundred hard photos the true value
-    could sit anywhere across a wide band. Reporting that wide band honestly is the point: a
-    single "26%" alone would pretend to a precision we don't have.</p>
-    <div class="chart-box" style="height:260px;"><canvas id="ci" role="img" aria-label="EER with confidence intervals"></canvas></div>
-  </div>
-
-  <div class="stats-card">
-    <h2>Score distributions</h2>
-    <p>Every comparison the system makes produces a similarity score between 0 and 1. Blue bars
-    count the real matches (same person), orange bars the impostors (different people). When the
-    two colours sit apart, a single cut-off can cleanly separate them. On the custom set (left)
-    they overlap heavily in the middle, and that overlap is exactly why it struggles. On LFW (right)
-    the two clusters barely touch.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-      <div class="chart-box" style="height:240px;"><canvas id="distCustom" role="img" aria-label="Custom score distribution"></canvas></div>
-      <div class="chart-box" style="height:240px;"><canvas id="distLfw" role="img" aria-label="LFW score distribution"></canvas></div>
+    <div class="section-card stats-card">
+      <p>This page shows how well the face-recognition system actually works, tested on two very
+      different sets of photos. The first is our own <strong>custom set</strong>, taken on purpose
+      under hard conditions: masks, hats, sunglasses, side views and poor lighting. The second is
+      <strong>LFW</strong>, a well-known public set of clean, front-facing photos that researchers
+      use as a common reference.</p>
+      <p>The point is not to pick a winner, since the two sets are not comparable in size or difficulty.
+      LFW tells us whether the system is <em>built correctly</em>, while the custom set tells us how it
+      <em>copes with real, messy conditions</em>. The gap between the two is what we actually want
+      to measure.</p>
+      <div class="takeaway">In one line: on clean photos the system is reliable (EER 5.6%), and on
+      deliberately hard photos it degrades (EER 26%). That contrast, not either number on its own,
+      is the result.</div>
     </div>
-    <div class="takeaway">The overlap on the left is the <em>cause</em>, and the high error rate is
-    the <em>effect</em>. Everything else on this page follows from how much these two colours mix.</div>
+
+    <!-- PAIRE 1 : les chiffres + leur fiabilite, cote a cote -->
+    <div class="stats-row">
+      <div class="section-card stats-card">
+        <h2>The headline numbers</h2>
+        <p>A few standard measures, side by side. <strong>EER</strong> is the error rate at the point
+        where wrongly-accepted impostors and wrongly-rejected real users are balanced, where lower is
+        better. <strong>AUC</strong> rates the overall ability to separate the two, where 1.0 is perfect and
+        0.5 is a coin toss. <strong>d&prime;</strong> is how far apart the "same person" and "different
+        person" scores sit, where higher is better. <strong>TAR @ FAR&le;1%</strong> answers the practical
+        question "if we only tolerate 1 impostor in 100 getting through, how many real users do we
+        still recognise?". The brackets are 95% confidence intervals: how much each number could
+        shift given how many photos we tested on.</p>
+        <table class="metrics">
+          <tr><th>Metric</th><th>Custom (hard conditions)</th><th>LFW (benchmark)</th></tr>
+          <tr><td>Real-user attempts</td><td>89</td><td>917</td></tr>
+          <tr><td>Impostor attempts</td><td>16</td><td>298</td></tr>
+          <tr><td>EER (95% CI)</td><td class="bad">26.0% [18.9, 43.2]</td><td class="good">5.6% [3.7, 7.0]</td></tr>
+          <tr><td>AUC</td><td>0.638</td><td>0.979</td></tr>
+          <tr><td>d&prime; (separability)</td><td>0.67</td><td>3.45</td></tr>
+          <tr><td>TAR @ FAR&le;1%</td><td>n/a*</td><td class="good">87.7% (thr 0.6)</td></tr>
+          <tr><td>Decision threshold</td><td>0.36</td><td>0.55</td></tr>
+        </table>
+        <p class="note">*With only 16 impostors, the false-accept rate can only change in jumps of
+        about 6%. A budget as tight as 1% can only be reached by setting the threshold so high
+        that no real user is accepted either, so this number is not meaningful for the custom set.
+        This limitation disappears with LFW's 298 impostors.</p>
+      </div>
+
+      <div class="section-card stats-card">
+        <h2>How confident are these numbers?</h2>
+        <p>This is the single most important chart on the page. Each bar is the EER (lower is better);
+        the thin line on top is the 95% confidence interval. LFW's bar is low <em>and</em> its line is
+        short, because we tested on over a thousand photos, so the number is trustworthy. The custom bar is
+        high <em>and</em> its line is long, because with only about a hundred hard photos the true value
+        could sit anywhere across a wide band. Reporting that wide band honestly is the point: a
+        single "26%" alone would pretend to a precision we don't have.</p>
+        <div class="chart-box" style="height:260px;"><canvas id="ci" role="img" aria-label="EER with confidence intervals"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-card stats-card">
+      <h2>Score distributions</h2>
+      <p>Every comparison the system makes produces a similarity score between 0 and 1. Blue bars
+      count the real matches (same person), orange bars the impostors (different people). When the
+      two colours sit apart, a single cut-off can cleanly separate them. On the custom set (left)
+      they overlap heavily in the middle, and that overlap is exactly why it struggles. On LFW (right)
+      the two clusters barely touch.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="chart-box" style="height:240px;"><canvas id="distCustom" role="img" aria-label="Custom score distribution"></canvas></div>
+        <div class="chart-box" style="height:240px;"><canvas id="distLfw" role="img" aria-label="LFW score distribution"></canvas></div>
+      </div>
+      <div class="takeaway">The overlap on the left is the <em>cause</em>, and the high error rate is
+      the <em>effect</em>. Everything else on this page follows from how much these two colours mix.</div>
+    </div>
+
+    <div class="section-card stats-card">
+      <h2>ROC curves</h2>
+      <p>This curve traces the trade-off as we move the decision threshold: across the bottom, how
+      many impostors we wrongly let in; up the side, how many real users we correctly accept. A
+      perfect system hugs the top-left corner. LFW (orange) climbs almost straight up to it; the
+      custom curve (blue) stays much lower. The red dots mark each system's balance point (the EER).
+      The custom line looks like a staircase because it was tested on few impostors, so it can only
+      move in big steps. With hundreds of tests it would be smooth, like LFW.</p>
+      <div class="chart-box" style="height:340px;"><canvas id="roc" role="img" aria-label="ROC curves custom vs LFW"></canvas></div>
+    </div>
+
+    <div class="section-card stats-card">
+      <h2>Results by photo condition (custom set)</h2>
+      <p>This is where the custom set earns its keep: it splits every photo by what made it hard.
+      Each bar shows three outcomes: correctly recognised (green), wrongly handled (orange), or
+      discarded before any matching because the face was too hidden or turned away (red). Normal and
+      glasses photos are almost all green; <strong>side views and masks</strong> pile up the orange
+      and red. The overall error rate isn't spread evenly: it's driven by a few specific conditions.</p>
+      <div class="chart-box" style="height:340px;"><canvas id="outcome" role="img" aria-label="Outcome per condition"></canvas></div>
+    </div>
+
+    <!-- PAIRE 2 : diagnostic fin (rejets + confusions), cote a cote -->
+    <div class="stats-row">
+      <div class="section-card stats-card">
+        <h2>Why some photos were discarded</h2>
+        <p>28 photos were set aside before any matching even started, for two reasons. Most
+        (24) were turned away by a deliberate rule that refuses faces seen too far from the
+        front, because lining them up to a standard template would be unreliable, so the system declines
+        rather than guess. The rest (4) had no face found at all, usually when a mask or hat
+        hid the eyes and nose the detector relies on. Both are intended behaviour, not a malfunction. The
+        system choosing <em>not</em> to answer on a bad photo is safer than a confident wrong guess.</p>
+        <div class="chart-box" style="height:280px;"><canvas id="fail" role="img" aria-label="Discards by condition and reason"></canvas></div>
+      </div>
+
+      <div class="section-card stats-card">
+        <h2>Who gets mistaken for whom</h2>
+        <p>Each row is the real person; each column is who the system guessed. The dark diagonal means
+        most people are identified correctly (68 of 89). The off-diagonal cells are the
+        mix-ups, and they are not random: a handful of people have faces the system finds genuinely
+        similar. The clearest case is <strong>Anthony Miranda mistaken for Florient Marchal (3 times)</strong>. These specific pairs, not a general
+        weakness, are what a next version should target, whether with more enrolment photos per person, or a
+        classifier trained to push confusable faces apart.</p>
+        <div id="cmHeat" style="overflow-x:auto;"></div>
+        <p class="note">The custom dataset is small (10 people), so the trend is clear but the
+        exact cell counts carry the wide uncertainty shown in the confidence-interval chart above.</p>
+      </div>
+    </div>
   </div>
-
-  <div class="stats-card">
-    <h2>ROC curves</h2>
-    <p>This curve traces the trade-off as we move the decision threshold: across the bottom, how
-    many impostors we wrongly let in; up the side, how many real users we correctly accept. A
-    perfect system hugs the top-left corner. LFW (orange) climbs almost straight up to it; the
-    custom curve (blue) stays much lower. The red dots mark each system's balance point (the EER).
-    The custom line looks like a staircase because it was tested on few impostors, so it can only
-    move in big steps. With hundreds of tests it would be smooth, like LFW.</p>
-    <div class="chart-box" style="height:340px;"><canvas id="roc" role="img" aria-label="ROC curves custom vs LFW"></canvas></div>
-  </div>
-
-  <div class="stats-card">
-    <h2>Results by photo condition (custom set)</h2>
-    <p>This is where the custom set earns its keep: it splits every photo by what made it hard.
-    Each bar shows three outcomes: correctly recognised (green), wrongly handled (orange), or
-    discarded before any matching because the face was too hidden or turned away (red). Normal and
-    glasses photos are almost all green; <strong>side views and masks</strong> pile up the orange
-    and red. The overall error rate isn't spread evenly: it's driven by a few specific conditions.</p>
-    <div class="chart-box" style="height:340px;"><canvas id="outcome" role="img" aria-label="Outcome per condition"></canvas></div>
-  </div>
-
-  <div class="stats-card">
-    <h2>Why some photos were discarded</h2>
-    <p>28 photos were set aside before any matching even started, for two reasons. Most
-    (24) were turned away by a deliberate rule that refuses faces seen too far from the
-    front, because lining them up to a standard template would be unreliable, so the system declines
-    rather than guess. The rest (4) had no face found at all, usually when a mask or hat
-    hid the eyes and nose the detector relies on. Both are intended behaviour, not a malfunction. The
-    system choosing <em>not</em> to answer on a bad photo is safer than a confident wrong guess.</p>
-    <div class="chart-box" style="height:280px;"><canvas id="fail" role="img" aria-label="Discards by condition and reason"></canvas></div>
-  </div>
-
-  <div class="stats-card">
-    <h2>Who gets mistaken for whom</h2>
-    <p>Each row is the real person; each column is who the system guessed. The dark diagonal means
-    most people are identified correctly (68 of 89). The off-diagonal cells are the
-    mix-ups, and they are not random: a handful of people have faces the system finds genuinely
-    similar. The clearest case is <strong>Anthony Miranda mistaken for Florient Marchal (3 times)</strong>. These specific pairs, not a general
-    weakness, are what a next version should target, whether with more enrolment photos per person, or a
-    classifier trained to push confusable faces apart.</p>
-    <div id="cmHeat" style="overflow-x:auto;"></div>
-    <p class="note">The custom dataset is small (10 people), so the trend is clear but the
-    exact cell counts carry the wide uncertainty shown in the confidence-interval chart above.</p>
-  </div>
-
-  <?php include("components/footer.php") ;?>
-
 
 </div>
+
+<?php include("components/footer.php") ;?>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
@@ -265,5 +294,6 @@ h+='</table>';
 h+='<div class="legend-inline">Green = correct (diagonal). Red = a mix-up: the row person guessed as the column person.</div>';
 document.getElementById('cmHeat').innerHTML=h;
 </script>
+
 </body>
 </html>

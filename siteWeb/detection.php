@@ -1,8 +1,10 @@
+<?php $current = "detection"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Face Recognition — Detect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Detect</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/navbar.css">
     <link rel="stylesheet" href="assets/css/footer.css">
@@ -40,6 +42,8 @@
         <p class="subtitle">Real-time face detection</p>
     </header>
 
+    
+
     <div class="section-card">
         <h2>Detect Faces</h2>
 
@@ -54,14 +58,49 @@
         <div class="btn-row" style="margin-top: 1rem;">
             <a href="register.php" class="btn btn-secondary">Back to Register</a>
         </div>
+        
+        <p class="home-text" style="margin-top:1rem; font-size:0.85rem;">
+        <strong>Privacy:</strong> the video stream and images are never stored on our server.
+        Each frame is analysed on the fly and immediately discarded. For more details,
+        see our <a href="privacy.php" target="_blank">privacy policy</a>.
+        </p>
     </div>
+<!-- HOW IT WORKS + LEGEND -->
+    <div class="section-card">
+        <h2>How detection works</h2>
+        <p class="home-text">
+            Your webcam streams to the server, which analyses each frame in real time:
+            it detects faces, compares them against the registered people, and draws a
+            box around each face with the matched name and a confidence score (0 to 1).
+        </p>
 
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#10b981;"></span>
+                Recognised - confident match (score &ge; 0.70)
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#facc15;"></span>
+                Uncertain - possible match, low confidence (0.50&ndash;0.70)
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot" style="background:#9ca3af;"></span>
+                Not recognised - shown as "unknown" (score &lt; 0.50)
+            </div>
+        </div>
+
+        <p class="home-text" style="margin-top:1rem;">
+            Make sure at least one person has been added from the
+            <a href="register.php">Register</a> page first, and stand in good, even lighting.
+        </p>        
+    
+    </div>
 
 <?php include("components/footer.php") ;?>
 
 
 </div>
 
-<script src="detection.js"></script>
+<script src="/assets/js/detection.js"></script>
 </body>
 </html>
