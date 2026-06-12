@@ -1,18 +1,7 @@
-script.js:232
- Uncaught (in promise) TypeError: Cannot read properties of null (reading 'style')
-    at getBlobs (script.js:232:59)
-    at addPerson (script.js:156:19)
-    at HTMLButtonElement.onclick (register.php:131:63)
-getBlobs	@	script.js:232
-addPerson	@	script.js:156
-onclick	@	register.php:131
-[NEW] Explain Console errors by using Copilot in Edge: click 
- to explain an error. Learn more
-Don't show again
-2
-script.js:232
- Uncaught (in promise) TypeError: Cannot read properties of null (reading 'style')
-    at getBlobs (script.js:232:59)
-    at addPerson (script.js:156:19)
-    at HTMLButtonElement.onclick (register.php:131:63)
-﻿
+{
+  "limit": 500,
+  "color_by": {
+    "payload": "name"
+  },
+  "algorithm": "TSNE"
+}
