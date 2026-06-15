@@ -1,47 +1,25 @@
-version: "3.9"
+version: '3.8'
 
 services:
-
-  inference:
+  facial-recognition-app:
     build: .
-    image: face-inference:latest
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=0
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-    volumes:
-      - ./model:/app/model:ro
+    container_name: face_recognition_api
+    restart: always
     ports:
       - "8000:8000"
-    depends_on:
-      qdrant:
-        condition: service_healthy
-    restart: unless-stopped
-
-  qdrant:
-    image: qdrant/qdrant:v1.9.2
     volumes:
-      - qdrant_data:/qdrant/storage
-    ports:
-      - "6333:6333"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./siteWeb:/usr/share/nginx/html:ro
-    depends_on:
-      - inference
-    restart: unless-stopped
-
-volumes:
-  qdrant_data:
+      # Dossier pour stocker tes modèles (poids ArcFace, YOLO, etc.) pour éviter de les retélécharger à chaque redémarrage
+      - ./models:/app/models
+      # Dossier pour tes visages connus ou ta base de données si elle utilise des fichiers locaux
+      - ./known_faces:/app/known_faces
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all # Alloue automatiquement ta carte graphique détectée
+              capabilities: [gpu]

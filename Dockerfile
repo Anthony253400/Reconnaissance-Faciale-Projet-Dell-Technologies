@@ -1,29 +1,37 @@
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+# 1. Utilisation d'une image stable haut de gamme CUDA 12.4, totalement compatible avec ton driver 13.0
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
+# 2. Désactiver les invites interactives pendant l'installation
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
 
-WORKDIR /app
-
-# Dépendances système
+# 3. Installer Python, Pip, CMake et les paquets requis par OpenCV / InsightFace
 RUN apt-get update && apt-get install -y \
-    python3.11 python3.11-dev python3-pip \
-    libgl1 libglib2.0-0 git curl \
+    python3-pip \
+    python3-dev \
+    git \
+    cmake \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Dépendances Python
+# 4. Dossier de travail dans le conteneur
+WORKDIR /app
+
+# 5. Copier la liste des paquets Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Code source
-COPY fonction/ ./fonction/
-COPY siteWeb/  ./siteWeb/
+# 6. Mettre à jour pip et installer tes librairies (PyTorch, OpenCV, InsightFace, etc.)
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
+# 7. Copier tout ton code source dans le conteneur
+COPY . .
 
+# 8. Exposer le port de FastAPI
 EXPOSE 8000
 
-CMD ["gunicorn", "siteWeb.main:app", \
-     "--workers", "1", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "120"]
+# 9. Commande de lancement de l'API
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
