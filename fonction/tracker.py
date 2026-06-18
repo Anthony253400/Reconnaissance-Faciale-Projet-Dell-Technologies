@@ -58,11 +58,11 @@ def iou_matrix(face_boxes, body_boxes):
 
 def assign_faces_to_bodies(face_boxes, body_boxes, threshold=0.3):
     """
-    Assigns face boxes to body boxes using the Hungarian algorithm.
+    Assigns face boxes to body boxes using the hungarian algorithm.
     Args:
-        face_boxes (list): Face bounding boxes [x1, y1, x2, y2].
-        body_boxes (list): Body bounding boxes [x1, y1, x2, y2].
-        threshold (float): Minimum IoU to consider a valid assignment.
+        face_boxes (list): face bounding boxes [x1, y1, x2, y2].
+        body_boxes (list): body bounding boxes [x1, y1, x2, y2].
+        threshold (float): minimum IoU to consider a valid assignment.
     Returns:
         dict: {body_index: face_index}
     """

@@ -31,7 +31,7 @@ app = FastAPI()
 # Models (loaded once at startup)
 model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
-#model_yolo      = load_model("yolo", True)
+model_yolo      = load_model("yolo", True)
 
 create_collection()   # ensure the 'face' collection exists
 
@@ -68,8 +68,11 @@ async def ws_detect(websocket: WebSocket):
             frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
 
             # 3. detection
+            t0 = time.perf_counter()
             boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
+            t1 = time.perf_counter()
             boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
+            t2 = time.perf_counter()
 
             # 4. recognize each face
             names, scores, clean_names = [], [], []
@@ -85,6 +88,9 @@ async def ws_detect(websocket: WebSocket):
                     names.append(clean if clean else "inconnu")
                     scores.append(round(float(score), 2) if score is not None else 0.0)
                 smoothers.prune(len(boxes_face))
+            t3 = time.perf_counter()
+
+            print(f"face={1000*(t1-t0):.0f}ms body={1000*(t2-t1):.0f}ms recog={1000*(t3-t2):.0f}ms")
 
             # align_crop may drop profile faces: pad to keep lists aligned with boxes_face
             while len(names) < len(boxes_face):
@@ -126,7 +132,8 @@ async def add_person(
 
     saved = 0
     name = f"{firstName} {lastName}".strip().lower()
-    client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+    #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+    #client = QdrantClient(path="..//qdrant_data")
 
 
     for i, photo in enumerate(photos):
@@ -150,7 +157,9 @@ async def add_person(
 
             embedding = get_embedding(crops[0], model_arcface)
 
-            save_embedding( name, embedding , client ,COLLECTION)
+            #save_embedding( name, embedding , client ,COLLECTION)
+            #save_embedding( name, embedding)
+
             saved += 1
 
         except Exception as e:

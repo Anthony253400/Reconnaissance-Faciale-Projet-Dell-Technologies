@@ -10,7 +10,7 @@ import os
 #client = QdrantClient(host="172.19.89.254", port=225)
 
 #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-
+client = QdrantClient(path="..//qdrant_data")
 """
 client = QdrantClient(host = os.getenv("qdrant_host" , 'localhost'),
                       port = int(os.getenv("Qdrant_port", 6333)),
@@ -36,7 +36,9 @@ def create_collection():
             )
         )
 
-def save_embedding(name, embedding , client , COLLECTION):
+#def save_embedding(name, embedding , client , COLLECTION):
+def save_embedding(name, embedding):
+
     """
     Saves a face embedding in the Qdrant vector database with the person's name as payload.
     Args:

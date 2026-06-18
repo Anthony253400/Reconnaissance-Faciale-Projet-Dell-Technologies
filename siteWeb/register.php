@@ -9,31 +9,28 @@
     <link rel="stylesheet" href="assets/css/footer.css">
 
     <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/script.js"></script>
-    <script src="assets/js/footer.js"></script>
+    
 
-
+    <style>
+        .btn-capture-wrap { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
+        .capture-ring { position: absolute; top: 0; left: 0; width: 72px; height: 72px; transform: rotate(-90deg); pointer-events: none; }
+        .capture-ring-bg { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 3; }
+        .capture-ring-prog { fill: none; stroke: #0076CE; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 201.06; stroke-dashoffset: 201.06; transition: stroke-dashoffset 0.12s linear; }
+        .steps-list li strong {
+            white-space: nowrap;
+            color: var(--text);
+            font-weight: 500;
+        }
+        #countdown-num {
+            background: rgba(0, 118, 206, 0.5);
+            border: 2px solid rgba(147, 197, 253, 0.8);
+            color: #bfdbfe;
+            padding: 10px 28px;
+            border-radius: 999px;
+        }
+    </style>
 </head>
 <body>
-<style>
-    .btn-capture-wrap { position: relative; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
-.capture-ring { position: absolute; top: 0; left: 0; width: 72px; height: 72px; transform: rotate(-90deg); pointer-events: none; }
-.capture-ring-bg { fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 3; }
-.capture-ring-prog { fill: none; stroke: #0076CE; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 201.06; stroke-dashoffset: 201.06; transition: stroke-dashoffset 0.12s linear; }
-.steps-list li strong {
-  white-space: nowrap;
-  color: var(--text);
-  font-weight: 500;
-}
-
-#countdown-num {
-    background: rgba(0, 118, 206, 0.5);
-    border: 2px solid rgba(147, 197, 253, 0.8);
-    color: #bfdbfe;
-    padding: 10px 28px;
-    border-radius: 999px;
-}
-</style>
 
 <?php include("components/navbar.php"); ?>
 
@@ -57,23 +54,10 @@
         </ol>
     </div>
 
-    <!-- SENDING METHOD -->
+    <!-- REGISTRATION -->
     <div class="section-card">
         <h2>Registration</h2>
 
-<!--        <div class="method-toggle">
-            <button class="method-btn active" id="btn-cam" onclick="switchMethod('cam')">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
-                Use webcam  (Recommended)
-            </button>
-            <?php /*
-            <button class="method-btn" id="btn-upload" onclick="switchMethod('upload')">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
-                Upload a photo
-            </button>
-            */ ;?>
-        </div>
--->
         <!-- WEBCAM PANEL -->
         <div id="panel-cam">
             <div class="webcam-wrapper">
@@ -83,7 +67,7 @@
                         <p class="cam-instruction-overlay">Press the button, wait for the countdown, then turn your head left, right, up and down (5 sec)</p>
                         <p class="cam-step-overlay" id="progress"></p>
                     </div>
-                    <div id="countdown-overlay" style="display:none; position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none;">
+                    <div id="countdown-overlay" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; pointer-events:none;">
                         <span id="countdown-num" style="font-size:120px; font-weight:500; color:white; line-height:1;"></span>
                         <span id="countdown-msg" style="display:none; background:rgba(0,118,206,0.5); border:2px solid rgba(147,197,253,0.8); color:#bfdbfe; font-size:16px; font-weight:500; padding:10px 28px; border-radius:999px;"></span>
                     </div>
@@ -99,23 +83,7 @@
                 </div>
             </div>
             <canvas id="canvas" style="display:none;"></canvas>
-            <p id="progress" style="text-align:center; margin-top:0.75rem; font-weight:500;"></p>
         </div>
-
-        <!-- UPLOAD PANEL -->
-        <?php /* 
-        <div id="panel-upload" style="display:none;">
-            <div class="upload-zone">
-                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
-                <p class="upload-title">Select a photo from your device</p>
-                <p class="upload-hint">JPG, PNG - clear face, good lighting</p>
-                <div class="form-group" style="margin-top: 0.75rem; margin-bottom: 0;">
-                    <input type="file" id="photo" accept="image/*" />
-                </div>
-            </div>
-            
-        </div>
-        */ ?>
     </div>
 
     <!-- PERSON DETAILS -->
@@ -147,18 +115,8 @@
 
 <?php include("components/footer.php") ;?>
 
-
 </div>
 
 <script src="assets/js/script.js"></script>
-<script>
-function switchMethod(method) {
-    document.getElementById('panel-cam').style.display    = method === 'cam'    ? 'block' : 'none';
-    document.getElementById('panel-upload').style.display = method === 'upload' ? 'block' : 'none';
-    document.getElementById('btn-cam').classList.toggle('active', method === 'cam');
-    document.getElementById('btn-upload').classList.toggle('active', method === 'upload');
-    if (method === 'cam') startWebcam();
-}
-</script>
 </body>
 </html>
