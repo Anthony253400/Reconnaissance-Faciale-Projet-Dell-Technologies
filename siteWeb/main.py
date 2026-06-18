@@ -17,7 +17,7 @@ from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Dist
 
 from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
-from fonction.faceAlignment import align_crop
+from fonction.faceAlignement2 import align_crop
 from fonction.faceEmbeddings import get_embedding
 from fonction.qdrant_db import save_embedding, create_collection, search_embedding
 from fonction.bodyDetection import BodyDetect_from_frame
@@ -52,9 +52,9 @@ async def ws_detect(websocket: WebSocket):
     print("[ws/detect] client connected")
 
     # per-connection state, so identities reset when the page is reopened
-    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, max_lost_frames=90)
+    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, frame_h=480)
     smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
-
+    
     try:
         while True:
             # 1. receive one JPEG frame (bytes) from the browser
@@ -66,6 +66,7 @@ async def ws_detect(websocket: WebSocket):
             if frame_bgr is None:
                 continue
             frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            print("FRAME SHAPE:", frame.shape)
 
             # 3. detection
             t0 = time.perf_counter()
@@ -158,7 +159,7 @@ async def add_person(
             embedding = get_embedding(crops[0], model_arcface)
 
             #save_embedding( name, embedding , client ,COLLECTION)
-            #save_embedding( name, embedding)
+            save_embedding( name, embedding)
 
             saved += 1
 

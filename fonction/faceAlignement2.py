@@ -22,11 +22,6 @@ _ARC_TEMPLATE_4 = np.array(
     dtype=np.float32,
 )
 
-# Max allowed nose offset from the eye midpoint (normalized by the inter-eye
-# distance) before the face is considered too much in profile and skipped.
-# Increase to keep more faces, decrease to be stricter. Tune by inspecting crops.
-_YAW_MAX = 0.35
-
 
 def align_crop(image, listFace, method):
     """
@@ -45,17 +40,6 @@ def align_crop(image, listFace, method):
     im_height, im_width = image.shape[:2]
     crops = []
 
-    if method == "mtcnn":
-        # Legacy branch left unchanged.
-        for face in result:
-            kp = face['keypoints']
-            left_eye  = kp['left_eye']
-            right_eye = kp['right_eye']
-            box = face['box']
-
-            crop = _do_alignment(image, left_eye, right_eye, box)
-            crops.append(crop)
-
     if method == "mediapipe":
         for detection in listFace.detections:
             keypoints = detection.keypoints
@@ -73,14 +57,10 @@ def align_crop(image, listFace, method):
             # instead -> upside-down face -> collapsed embeddings.
             eye_left, eye_right = (eye_a, eye_b) if eye_a[0] <= eye_b[0] else (eye_b, eye_a)
 
-            # Frontality gate: skip strong profiles, where half the face is not
-            # visible. Such crops are degenerate and cause false matches.
-            eye_mid_x = (eye_left[0] + eye_right[0]) / 2.0
+            # Guard against degenerate cases (eyes detected at the same point).
             eye_dist = float(np.hypot(eye_right[0] - eye_left[0],
                                       eye_right[1] - eye_left[1]))
             if eye_dist < 1.0:
-                continue
-            if abs(nose[0] - eye_mid_x) / eye_dist > _YAW_MAX:
                 continue
 
             # Similarity transform (rotation + uniform scale + translation)
@@ -96,20 +76,3 @@ def align_crop(image, listFace, method):
             crops.append(face_final)
 
     return crops
-
-
-if __name__ == "__main__":
-    model_path_blazeface = 'model/blaze_face_short_range.tflite'
-
-    base_options = python.BaseOptions(model_asset_path=model_path_blazeface)
-    options = vision.FaceDetectorOptions(base_options=base_options)
-    my_global_detector = vision.FaceDetector.create_from_options(options)
-
-    with open("images/penche.jpg", "rb") as f:
-        image_bytes = f.read()
-
-    boxes, result, img_rgb = FacesDetects_from_bytes(
-        image_bytes, method="mediapipe", detector=my_global_detector
-    )
-    align_crop(img_rgb, result, "mediapipe")
-    print("TOto")
