@@ -1,13 +1,15 @@
-# 1. Utilisation d'une image stable haut de gamme CUDA 12.4, totalement compatible avec ton driver 13.0
+# 1. Image de base officielle avec support GPU
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
-# 2. Désactiver les invites interactives pendant l'installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 3. Installer Python, Pip, CMake et les paquets requis par OpenCV / InsightFace
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3-dev \
+# 2. Installation de Python 3.11 et des bibliothèques système (OpenCV + MediaPipe)
+RUN apt-get update && apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
     git \
     cmake \
     libgl1-mesa-glx \
@@ -15,23 +17,35 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    curl \
+    libgles2 \
+    libegl1 \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Dossier de travail dans le conteneur
+# 3. Forcer l'utilisation de Python 3.11
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+
 WORKDIR /app
 
-# 5. Copier la liste des paquets Python
 COPY requirements.txt .
 
-# 6. Mettre à jour pip et installer tes librairies (PyTorch, OpenCV, InsightFace, etc.)
+# 4. Installation de l'écosystème PyTorch Linux stable (CUDA 12.1)
 RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt
+    pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
-# 7. Copier tout ton code source dans le conteneur
+# Pré-installation des outils et dépendances critiques requises par les métadonnées de torchreid
+RUN pip3 install --no-cache-dir numpy cython scipy gdown
+
+# Étape A : On installe le reste de vos dépendances depuis le requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Étape B : Compilation et installation finale de torchreid sans isolation
+RUN pip3 install --no-cache-dir --no-build-isolation git+https://github.com/KaiyangZhou/deep-person-reid.git
+
+# 5. On copie le reste du code
 COPY . .
 
-# 8. Exposer le port de FastAPI
 EXPOSE 8000
 
-# 9. Commande de lancement de l'API
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "siteWeb.main:app", "--host", "0.0.0.0", "--port", "8000"]

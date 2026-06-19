@@ -70,7 +70,8 @@ def FacesDetects_from_frame(image, method : str , detector):
     Returns:
         tuple: 
             - box (list): A list of list in the format [x1, y1, x2, y2] which contains the rectangles of the face.
-            - result (list): The raw object returned by mtcnn or MediaPipe library. Containing the native detection data, bounding boxes, and scores.
+            - result (list): The raw object returned by mtcnn or MediaPipe library. Containing the native detection data, bounding 
+            boxes, and scores.
             - image (numpy.ndarray): The loaded image data in RGB format.
     
     """ 
