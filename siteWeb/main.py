@@ -42,6 +42,25 @@ model_arcface   = load_model("arcface", True)
 model_yolo      = load_model("yolo", True)
 
 create_collection()   # ensure the 'face' collection exists
+import torch
+
+print("\n" + "="*40)
+if torch.cuda.is_available():
+    print(f"🔥 GPU DÉTECTÉ PAR PYTORCH : {torch.cuda.get_device_name(0)}")
+    print(f"Nombre de GPU dispos : {torch.cuda.device_count()}")
+else:
+    print("⚠️ ATTENTION : PyTorch ne voit AUCUN GPU. Inférence sur CPU.")
+print("="*40 + "\n")
+import onnxruntime as ort
+
+print("\n" + "="*40)
+providers = ort.get_available_providers()
+print(f"Moteurs d'exécution ONNX dispo : {providers}")
+if 'CUDAExecutionProvider' in providers:
+    print("🔥 ONNX RUNTIME UTILISE LE GPU (CUDA) !")
+else:
+    print("⚠️ ATTENTION : ONNX se rabat sur le CPU.")
+print("="*40 + "\n")
 
 app.add_middleware(
     CORSMiddleware,
