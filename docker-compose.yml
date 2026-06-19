@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # 1. Base de données vectorielle pour les visages
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
@@ -9,7 +6,6 @@ services:
     volumes:
       - ./qdrant_storage:/qdrant/storage
 
-  # 2. Votre API d'intelligence artificielle (FastAPI)
   facial-recognition-app:
     build: .
     container_name: face_recognition_api
@@ -25,15 +21,18 @@ services:
               count: all
               capabilities: [gpu]
 
-  # 3. Votre site Web PHP (Accessible directement par l'utilisateur)
   mon-site-web:
     image: php:8.2-apache
     container_name: site_web_php
     restart: always
     ports:
-      - "80:80"  # Le port 80 est le port web standard (pas besoin de le taper dans l'URL)
+      - "80:80"
+      - "443:443"
     volumes:
-      # Copie le dossier contenant votre index.php dans le répertoire web d'Apache
       - ./siteWeb:/var/www/html/
+      - ./ssl.conf:/etc/apache2/sites-enabled/ssl.conf
+      - /home/ub_admin/certs/server.crt:/etc/ssl/certs/server.crt
+      - /home/ub_admin/certs/server.key:/etc/ssl/private/server.key
+    command: bash -c "a2enmod ssl && apache2-foreground"
     depends_on:
       - facial-recognition-app
