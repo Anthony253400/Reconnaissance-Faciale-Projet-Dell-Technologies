@@ -1,25 +1,39 @@
 version: '3.8'
 
 services:
+  # 1. Base de données vectorielle pour les visages
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: always
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
+  # 2. Votre API d'intelligence artificielle (FastAPI)
   facial-recognition-app:
     build: .
     container_name: face_recognition_api
     restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      # Dossier pour stocker tes modèles (poids ArcFace, YOLO, etc.) pour éviter de les retélécharger à chaque redémarrage
-      - ./models:/app/models
-      # Dossier pour tes visages connus ou ta base de données si elle utilise des fichiers locaux
-      - ./known_faces:/app/known_faces
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
-      - PYTHONUNBUFFERED=1
+      - qdrant_host=qdrant
+      - Qdrant_port=6333
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: all # Alloue automatiquement ta carte graphique détectée
+              count: all
               capabilities: [gpu]
+
+  # 3. Votre site Web PHP (Accessible directement par l'utilisateur)
+  mon-site-web:
+    image: php:8.2-apache
+    container_name: site_web_php
+    restart: always
+    ports:
+      - "80:80"  # Le port 80 est le port web standard (pas besoin de le taper dans l'URL)
+    volumes:
+      # Copie le dossier contenant votre index.php dans le répertoire web d'Apache
+      - ./siteWeb:/var/www/html/
+    depends_on:
+      - facial-recognition-app

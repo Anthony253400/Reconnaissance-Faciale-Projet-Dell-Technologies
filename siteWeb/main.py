@@ -1,3 +1,4 @@
+import os  # <-- AJOUTÉ pour lire l'environnement Docker
 from unicodedata import name
 
 import cv2
@@ -27,6 +28,13 @@ from fonction.identity_smoother import SmootherBank
 
 COLLECTION = 'face'
 app = FastAPI()
+
+# Récupération dynamique de la configuration réseau Qdrant (Docker ou Local)
+QDRANT_HOST = os.getenv("qdrant_host", "localhost")
+QDRANT_PORT = int(os.getenv("Qdrant_port", 6333))
+
+# Client Qdrant global (réutilisé par toutes les routes)
+qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, prefer_grpc=True)
 
 # Models (loaded once at startup)
 model_mediapipe = load_model("blazeface_short", False)
@@ -126,8 +134,6 @@ async def add_person(
 
     saved = 0
     name = f"{firstName} {lastName}".strip().lower()
-    client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-
 
     for i, photo in enumerate(photos):
         contents = await photo.read()
@@ -150,7 +156,8 @@ async def add_person(
 
             embedding = get_embedding(crops[0], model_arcface)
 
-            save_embedding( name, embedding , client ,COLLECTION)
+            # Utilisation du client globalisé et configuré pour Docker
+            save_embedding(name, embedding, qdrant_client, COLLECTION)
             saved += 1
 
         except Exception as e:

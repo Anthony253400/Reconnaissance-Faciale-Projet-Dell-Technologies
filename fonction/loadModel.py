@@ -3,7 +3,7 @@ import cv2
 CUDA_AVAILABLE = "CUDAExecutionProvider" in ort.get_available_providers()
 
 
-def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVAILABLE ):
+def load_arcface(model_path: str = "model/arc.onnx", use_gpu: bool = CUDA_AVAILABLE ):
     """
     Charge ArcFace (ONNX).
     use_gpu=True  → CUDAExecutionProvider
@@ -30,7 +30,7 @@ def load_arcface(model_path: str = "../model/arc.onnx", use_gpu: bool = CUDA_AVA
         return session
 
 
-def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = True, processeur_intel: bool = False):
+def load_yolo(model_path: str = "model/yolov8n_320.onnx", use_gpu: bool = True, processeur_intel: bool = False):
     """
     Charge YOLOv8 au format ONNX.
     Retourne un tuple ('onnx'|'opencv', model_instance)
@@ -76,16 +76,16 @@ def load_yolo(model_path: str = "../model/yolov8n_320.onnx", use_gpu: bool = Tru
     return ('opencv', net)
 
 
-def load_blazeface(model_path: str="../model/blaze_face_short_range.tflite", use_gpu: bool = CUDA_AVAILABLE):
+def load_blazeface(model_path: str="model/blaze_face_short_range.tflite", use_gpu: bool = CUDA_AVAILABLE):
     """
     Charge BlazeFace (MediaPipe).
     use_gpu=True  → Delegate GPU
     use_gpu=False → CPU
     """
     if model_path =='blazeface_short':
-        model_path = '../model/blaze_face_short_range.tflite'
+        model_path = 'model/blaze_face_short_range.tflite'
     else:
-        model_path = '../model/blaze_face_full_range.tflite'
+        model_path = 'model/blaze_face_full_range.tflite'
 
 
     from mediapipe.tasks import python
