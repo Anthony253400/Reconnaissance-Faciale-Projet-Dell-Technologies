@@ -39,7 +39,7 @@ function startDetection() {
     overlay.width  = SEND_W;                          // ← set once, same space
     overlay.height = SEND_H;
 
-    const ws = new WebSocket('ws://localhost:8000/ws/detect');
+    const ws = new WebSocket('ws://172.27.30.34:8000/ws/detect');
 
     ws.onopen = () => { console.log("WebSocket connected"); sendFrame(); };
 

@@ -179,7 +179,7 @@ async function addPerson() {
     blobs.forEach((blob, i) => formData.append('photos', blob, `frame_${i}.jpg`));
 
     try {
-        const res = await fetch('http://localhost:8000/add', {
+        const res = await fetch('http://172.27.30.34:8000/add', {
             method: 'POST',
             body: formData
         });
