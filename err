@@ -1,35 +1,30 @@
-(.venv) PS C:\Users\team2\Desktop\Reconnaissance-Faciale-Projet-Dell-Technologies> docker compose up --build
-time="2026-06-15T12:02:27+02:00" level=warning msg="C:\\Users\\team2\\Desktop\\Reconnaissance-Faciale-Projet-Dell-Technologies\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
-#1 [internal] load local bake definitions
-#1 reading from stdin 745B done
-#1 DONE 0.0s
-
-#2 [internal] load build definition from Dockerfile
-#2 transferring dockerfile: 1.16kB 0.0s done
-#2 DONE 0.1s
-
-#3 [internal] load metadata for docker.io/nvidia/cuda:12.4.1-runtime-ubuntu22.04
-#3 ERROR: failed to do request: Head "https://registry-1.docker.io/v2/nvidia/cuda/manifests/12.4.1-runtime-ubuntu22.04": EOF
+[+] Building 3144.3s (14/14) FINISHED                                                                                                                                                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                    0.0s
+ => => transferring dockerfile: 941B                                                                                                                                                                                                    0.0s
+ => [internal] load metadata for docker.io/library/python:3.11-slim-bookworm                                                                                                                                                            1.3s
+ => [internal] load .dockerignore                                                                                                                                                                                                       0.0s
+ => => transferring context: 91B                                                                                                                                                                                                        0.0s
+ => CACHED [1/9] FROM docker.io/library/python:3.11-slim-bookworm@sha256:e2d3af735aff6eeee600b1933bedd99da6645fedf572cc12ef4cc1331f2ceebe                                                                                               0.0s
+ => => resolve docker.io/library/python:3.11-slim-bookworm@sha256:e2d3af735aff6eeee600b1933bedd99da6645fedf572cc12ef4cc1331f2ceebe                                                                                                      0.0s
+ => [internal] load build context                                                                                                                                                                                                       0.0s
+ => => transferring context: 3.67kB                                                                                                                                                                                                     0.0s
+ => [2/9] RUN apt-get update && apt-get install -y     git     cmake     libgl1-mesa-glx     libglib2.0-0     libsm6     libxext6     libxrender-dev     libgles2     libegl1     && rm -rf /var/lib/apt/lists/*                      184.3s
+ => [3/9] WORKDIR /app                                                                                                                                                                                                                  2.2s
+ => [4/9] COPY requirements.txt .                                                                                                                                                                                                       0.0s
+ => [5/9] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121                                                              587.1s
+ => [6/9] RUN pip install --no-cache-dir numpy cython scipy gdown                                                                                                                                                                      51.4s
+ => [7/9] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                                                                         1756.0s
+ => [8/9] RUN pip install --no-cache-dir --no-build-isolation git+https://github.com/KaiyangZhou/deep-person-reid.git                                                                                                                  49.0s
+ => [9/9] COPY . .                                                                                                                                                                                                                      0.3s
+ => ERROR exporting to image                                                                                                                                                                                                          512.4s
+ => => exporting layers                                                                                                                                                                                                               432.3s
+ => => exporting manifest sha256:e3613fd079d78de084ca9edcf993e554fc3b208b0a5ff4a7724d1142f36481e0                                                                                                                                       0.0s
+ => => exporting config sha256:03cadfb0e09e5887861debecf3049f8756b66342c3eb6a33fbfa80b00ac2f41a                                                                                                                                         0.0s
+ => => exporting attestation manifest sha256:f1769f2dc5c952a050dca935ec27cdc0d041f4510547160ebc9825221cb8f894                                                                                                                           0.0s
+ => => exporting manifest list sha256:778d1e4a17308d6ea8454441b5b24e04eeb5d40a7b7c366ab30fa6f77c4ae9b0                                                                                                                                  0.0s
+ => => naming to docker.io/library/mon-image:latest                                                                                                                                                                                     0.0s
+ => => unpacking to docker.io/library/mon-image:latest                                                                                                                                                                                 80.0s
 ------
- > [internal] load metadata for docker.io/nvidia/cuda:12.4.1-runtime-ubuntu22.04:
+ > exporting to image:
 ------
-[+] up 0/1
- - Image reconnaissance-faciale-projet-dell-technologies-facial-recognition-app Building                                                                                                                                                 1.4sDockerfile:2
-
---------------------
-
-   1 |     # 1. Utilisation d'une image stable haut de gamme CUDA 12.4, totalement compatible avec ton driver 13.0
-
-   2 | >>> FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
-
-   3 |     
-
-   4 |     # 2. Désactiver les invites interactives pendant l'installation
-
---------------------
-
-failed to solve: nvidia/cuda:12.4.1-runtime-ubuntu22.04: failed to resolve source metadata for docker.io/nvidia/cuda:12.4.1-runtime-ubuntu22.04: failed to do request: Head "https://registry-1.docker.io/v2/nvidia/cuda/manifests/12.4.1-runtime-ubuntu22.04": EOF
-
-
-What's next:
-    Debug this Compose error with Gordon → docker ai "help me fix this compose error"
+ERROR: failed to build: failed to solve: failed to extract layer sha256:c266b21e965c749818175d4c0899109d75fb29255b4acf288b869b709590a437: write /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/163/fs/usr/local/lib/python3.11/site-packages/fontTools/misc/bezierTools.cpython-311-x86_64-linux-gnu.so: no space left on device
