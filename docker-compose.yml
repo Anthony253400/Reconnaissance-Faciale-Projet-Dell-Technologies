@@ -10,7 +10,6 @@ services:
       - ./qdrant_storage:/qdrant/storage
 
   # 2. Votre API d'intelligence artificielle (FastAPI)
-  services:
   facial-recognition-app:
     build:
       context: .
