@@ -10,17 +10,23 @@ services:
       - ./qdrant_storage:/qdrant/storage
 
   # 2. Votre API d'intelligence artificielle (FastAPI)
+  services:
   facial-recognition-app:
-    build: 
+    build:
       context: .
       network: host
+      args:
+        - HTTP_PROXY=http://proxy.mtp.supportlabs.dell:80
+        - HTTPS_PROXY=http://proxy.mtp.supportlabs.dell:80
+        - NO_PROXY=localhost,127.0.0.1,qdrant
     container_name: face_recognition_api
     restart: always
-    ports:
-      - "8000:8000"
     environment:
       - qdrant_host=qdrant
       - Qdrant_port=6333
+      - HTTP_PROXY=http://proxy.mtp.supportlabs.dell:80
+      - HTTPS_PROXY=http://proxy.mtp.supportlabs.dell:80
+      - NO_PROXY=localhost,127.0.0.1,qdrant
     deploy:
       resources:
         reservations:
