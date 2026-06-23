@@ -11,7 +11,9 @@ services:
 
   # 2. Votre API d'intelligence artificielle (FastAPI)
   facial-recognition-app:
-    build: .
+    build: 
+      context: .
+      network: host
     container_name: face_recognition_api
     restart: always
     ports:
