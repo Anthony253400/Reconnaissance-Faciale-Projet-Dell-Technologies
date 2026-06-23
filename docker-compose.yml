@@ -6,6 +6,8 @@ services:
     image: qdrant/qdrant:latest
     container_name: qdrant
     restart: always
+    ports:
+      - "6333:6333"
     volumes:
       - ./qdrant_storage:/qdrant/storage
 
