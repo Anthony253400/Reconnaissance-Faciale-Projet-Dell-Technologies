@@ -20,6 +20,8 @@ services:
         - NO_PROXY=localhost,127.0.0.1,qdrant
     container_name: face_recognition_api
     restart: always
+    ports:
+      - "8000:8000"
     environment:
       - qdrant_host=qdrant
       - Qdrant_port=6333
