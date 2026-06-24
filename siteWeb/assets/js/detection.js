@@ -39,7 +39,7 @@ function startDetection() {
     overlay.height = SEND_H;
 
     // Modification ici pour rendre l'URL du WebSocket dynamique
-    const wsUrl = `ws://${window.location.hostname}:8000/ws/detect`;
+    const wsUrl = `ws://${window.location.hostname}:8001/ws/detect`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => { console.log("WebSocket connected"); sendFrame(); };
