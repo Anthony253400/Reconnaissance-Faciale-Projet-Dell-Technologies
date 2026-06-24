@@ -12,24 +12,20 @@ services:
       - ./qdrant_storage:/qdrant/storage
 
   # 2. Votre API d'intelligence artificielle (FastAPI)
+
   facial-recognition-app:
     build:
       context: .
       network: host
-      args:
+    container_name: face_recognition_api
+    restart: always
+    args:
         - HTTP_PROXY=http://proxy.mtp.supportlabs.dell:80
         - HTTPS_PROXY=http://proxy.mtp.supportlabs.dell:80
         - NO_PROXY=localhost,127.0.0.1,qdrant
-    container_name: face_recognition_api
-    restart: always
-    ports:
-      - "8000:8000"
     environment:
       - qdrant_host=qdrant
       - Qdrant_port=6333
-      - HTTP_PROXY=http://proxy.mtp.supportlabs.dell:80
-      - HTTPS_PROXY=http://proxy.mtp.supportlabs.dell:80
-      - NO_PROXY=localhost,127.0.0.1,qdrant
     deploy:
       resources:
         reservations:
@@ -37,8 +33,22 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    # 4 workers, chacun prend le GPU que CUDA_VISIBLE_DEVICES lui donne
+    command: >
+      sh -c "
+        CUDA_VISIBLE_DEVICES=0 uvicorn siteWeb.main:app --host 0.0.0.0 --port 8001 &
+        CUDA_VISIBLE_DEVICES=1 uvicorn siteWeb.main:app --host 0.0.0.0 --port 8002 &
+        CUDA_VISIBLE_DEVICES=2 uvicorn siteWeb.main:app --host 0.0.0.0 --port 8003 &
+        CUDA_VISIBLE_DEVICES=3 uvicorn siteWeb.main:app --host 0.0.0.0 --port 8004 &
+        wait
+      "
+    ports:
+      - "8001:8001"
+      - "8002:8002"
+      - "8003:8003"
+      - "8004:8004"
 
-  # 3. Votre site Web PHP (Accessible directement par l'utilisateur)
+  # 3. Votre site Web PHP 
   mon-site-web:
     image: php:8.2-apache
     container_name: site_web_php
