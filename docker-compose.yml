@@ -11,7 +11,12 @@ services:
       - ./qdrant_storage:/qdrant/storage
 
   worker-gpu0:
-    build: .
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
     container_name: face_gpu0
     restart: always
     environment:
@@ -31,7 +36,12 @@ services:
       - "8000"
 
   worker-gpu1:
-    build: .
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
     container_name: face_gpu1
     restart: always
     environment:
@@ -51,7 +61,12 @@ services:
       - "8000"
 
   worker-gpu2:
-    build: .
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
     container_name: face_gpu2
     restart: always
     environment:
@@ -71,7 +86,12 @@ services:
       - "8000"
 
   worker-gpu3:
-    build: .
+    build:
+      context: .
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
     container_name: face_gpu3
     restart: always
     environment:
