@@ -7,7 +7,6 @@ ENV http_proxy=$HTTP_PROXY
 ENV https_proxy=$HTTPS_PROXY
 ENV no_proxy=$NO_PROXY
 
-
 RUN apt-get update && apt-get install -y \
     git \
     cmake \
@@ -23,17 +22,22 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY requirements.txt .
 
-# 4. Installation PyTorch (CUDA 12.1)
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install --no-cache-dir --upgrade pip
 
-# 5. Dépendances critiques pour torchreid
+#  PyTorch cu117 = seule version qui supporte CC 7.0 (Tesla V100)
+RUN pip install --no-cache-dir torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu117
+
+#  onnxruntime-gpu compatible CUDA 11.x / CC 7.0
+RUN pip install --no-cache-dir onnxruntime-gpu==1.16.3
+
+# Dépendances critiques pour torchreid
 RUN pip install --no-cache-dir numpy cython scipy gdown
 
-# 6. Reste des dépendances
+# Reste des dépendances (onnxruntime CPU ne doit PAS être dedans)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 7. Compilation torchreid
+# Compilation torchreid
 RUN pip install --no-cache-dir --no-build-isolation git+https://github.com/KaiyangZhou/deep-person-reid.git
 
 COPY . .
