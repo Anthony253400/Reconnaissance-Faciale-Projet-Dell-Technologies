@@ -36,10 +36,30 @@ QDRANT_PORT = int(os.getenv("Qdrant_port", 6333))
 
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, prefer_grpc=True)
 
-# Models (loaded once at startup)
+# Models (loaded once at startup)*
+'''
 model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
 model_yolo      = load_model("yolo", True)
+'''
+import os
+import torch
+import onnxruntime as ort
+
+gpu_id = os.getenv("CUDA_VISIBLE_DEVICES", "?")
+print(f"\n{'='*40}")
+print(f"Worker assigné au GPU physique : {gpu_id}")
+if torch.cuda.is_available():
+    print(f"PyTorch voit : {torch.cuda.get_device_name(0)}")
+else:
+    print("PyTorch : CPU seulement")
+
+providers = ort.get_available_providers()
+if 'CUDAExecutionProvider' in providers:
+    print("ONNX Runtime : GPU (CUDA)")
+else:
+    print("ONNX Runtime : CPU")
+print(f"{'='*40}\n")
 
 create_collection() 
 import torch
