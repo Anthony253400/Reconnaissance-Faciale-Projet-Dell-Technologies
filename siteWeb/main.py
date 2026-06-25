@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.append('../')
 
-from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
@@ -19,7 +19,7 @@ from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
 from fonction.faceAlignement2 import align_crop
 from fonction.faceEmbeddings import get_embedding
-from fonction.qdrant_db import save_embedding, create_collection, search_embedding
+from fonction.qdrant_db import save_embedding, create_collection, search_embedding, delete_person, list_people, rename_person, get_all_embeddings
 from fonction.bodyDetection import BodyDetect_from_frame
 from fonction.tracker import BodyTracker
 from fonction.bodyAlignment import body_crop
@@ -174,5 +174,68 @@ async def add_person(
           f"{(time.perf_counter() - t_start) * 1000:.1f} ms")
     return {"status": "ok", "frames_used": saved, "total_frames": len(photos)}
 
+@app.get("/people")
+async def get_people():
+    return {"people": list_people()}
+
+
+@app.put("/people/{name}")
+async def update_person(name: str, new_name: str = Body(..., embed=True)):
+    new_name = new_name.strip().lower()
+    if not new_name:
+        return Response(status_code=422, content="New name is empty.")
+    rename_person(name, new_name)
+    return {"status": "renamed", "old_name": name, "new_name": new_name}
+
+@app.delete("/people/{name}")
+async def remove_person(name: str):
+    delete_person(name)
+    return {"status": "deleted", "name": name}
+
+@app.on_event("shutdown")
+def _close_qdrant():
+    from fonction.qdrant_db import client
+    client.close()
+
+@app.get("/embeddings_3d")
+async def embeddings_3d():
+    """
+    Projects all stored 512-D face embeddings down to 3 dimensions for
+    visualization. Uses t-SNE when there are enough samples, and falls back
+    to PCA (more stable) when there are very few points.
+    Returns: {"points": [{"name": str, "x": float, "y": float, "z": float}, ...]}
+    """
+    names, vectors = get_all_embeddings()
+    n = len(vectors)
+    if n == 0:
+        return {"points": []}
+
+    X = np.asarray(vectors, dtype=np.float32)
+
+    if n < 4:
+        # too few points for t-SNE: use PCA, padding to 3 dims if needed
+        from sklearn.decomposition import PCA
+        comps = min(3, n, X.shape[1])
+        coords = PCA(n_components=comps).fit_transform(X)
+        if coords.shape[1] < 3:
+            pad = np.zeros((n, 3 - coords.shape[1]), dtype=np.float32)
+            coords = np.hstack([coords, pad])
+    else:
+        from sklearn.manifold import TSNE
+        # perplexity must stay below the number of samples
+        perplexity = min(30, max(2, n - 1))
+        coords = TSNE(
+            n_components=3,
+            perplexity=perplexity,
+            init="pca",
+            random_state=42,
+        ).fit_transform(X)
+
+    points = [
+        {"name": names[i], "x": float(coords[i, 0]),
+         "y": float(coords[i, 1]), "z": float(coords[i, 2])}
+        for i in range(n)
+    ]
+    return {"points": points}
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")
