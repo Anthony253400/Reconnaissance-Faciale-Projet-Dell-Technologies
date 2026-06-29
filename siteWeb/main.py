@@ -28,7 +28,16 @@ from fonction.identity_smoother import SmootherBank
 from concurrent.futures import ThreadPoolExecutor
 
 
-COLLECTION = 'face'
+import os
+from dotenv import load_dotenv
+
+# Load .env (same file the frontend and qdrant_db use)
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+# Config from environment
+COLLECTION = os.getenv("QDRANT_COLLECTION", "face")
+THRESHOLD  = float(os.getenv("THRESHOLD", "0.61"))
+
 app = FastAPI()
 
 # Récupération dynamique de la configuration réseau Qdrant (Docker ou Local)

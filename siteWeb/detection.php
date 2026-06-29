@@ -1,18 +1,17 @@
+<?php require_once __DIR__ . '/config.php'; ?>
 <?php $current = "detection"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition Detect</title>
+    <title>LiveFace — Detection</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/navbar.css">
     <link rel="stylesheet" href="assets/css/footer.css">
 
-
+    <?php render_js_config(); ?>
     <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/detection.js"></script>
-
 
     <style>
         .detection-wrapper {
@@ -79,15 +78,11 @@
         <div class="legend">
             <div class="legend-item">
                 <span class="legend-dot" style="background:#10b981;"></span>
-                Recognised - confident match (score &ge; 0.70)
-            </div>
-            <div class="legend-item">
-                <span class="legend-dot" style="background:#facc15;"></span>
-                Uncertain - possible match, low confidence (0.50&ndash;0.70)
+                Recognised - confident match (score &ge; 0.61)
             </div>
             <div class="legend-item">
                 <span class="legend-dot" style="background:#9ca3af;"></span>
-                Not recognised - shown as "unknown" (score &lt; 0.50)
+                Not recognised - shown as "unknown" (score &lt; 0.61)
             </div>
         </div>
 
@@ -103,6 +98,6 @@
 
 </div>
 
-<script src="/assets/js/detection.js"></script>
+<script src="assets/js/detection.js"></script>
 </body>
 </html>

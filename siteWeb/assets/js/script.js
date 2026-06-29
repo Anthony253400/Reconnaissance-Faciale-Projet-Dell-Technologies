@@ -179,7 +179,8 @@ async function addPerson() {
     blobs.forEach((blob, i) => formData.append('photos', blob, `frame_${i}.jpg`));
 
     try {
-        const res = await fetch('http://localhost:8000/add', {
+        // API URL from injected config (no hardcoded host/port)
+        const res = await fetch(`${window.APP_CONFIG.API_BASE}/add`, {
             method: 'POST',
             body: formData
         });

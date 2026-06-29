@@ -1,24 +1,34 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Distance, PointIdsList, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    FilterSelector, PointStruct, VectorParams, Distance,
+    PointIdsList, Filter, FieldCondition, MatchValue
+)
 import uuid
 import os
+from dotenv import load_dotenv
 
-#anthony
-#client = QdrantClient(host="10.233.220.118", port=6333)
+# Load the same .env the frontend uses.
+# This file is in fonction/, the .env is in siteWeb/, so go up then into siteWeb.
+_ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "siteWeb", ".env")
+load_dotenv(_ENV_PATH)
 
-#dell_guest
-#client = QdrantClient(host="172.19.89.254", port=225)
+# ----- Config from environment (single source of truth) -----
+COLLECTION   = os.getenv("QDRANT_COLLECTION", "face")
+QDRANT_MODE  = os.getenv("QDRANT_MODE", "embedded")
+QDRANT_PATH  = os.getenv("QDRANT_PATH", "../qdrant_data")
+QDRANT_HOST  = os.getenv("QDRANT_HOST", "localhost")
+QDRANT_PORT  = int(os.getenv("QDRANT_PORT", "6333"))
+THRESHOLD    = float(os.getenv("THRESHOLD", "0.61"))
 
-#client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-client = QdrantClient(path="..//qdrant_data")
-"""
-client = QdrantClient(host = os.getenv("qdrant_host" , 'localhost'),
-                      port = int(os.getenv("Qdrant_port", 6333)),
-                      prefer_grpc=True
-                      )
-
-COLLECTION = "face"
-
+# ----- Open the Qdrant client according to the mode -----
+# embedded: local file-based store (standalone demo, NO grpc).
+# server:   connect to a running Qdrant (Docker/remote) over HTTP.
+if QDRANT_MODE == "server":
+    # prefer_grpc stays False on purpose: HTTP avoids the cygrpc DLL
+    # that the Dell machine's application-control policy blocks.
+    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, prefer_grpc=False)
+else:
+    client = QdrantClient(path=QDRANT_PATH)
 
 def create_collection():
     """
@@ -57,7 +67,7 @@ def save_embedding(name, embedding):
         )]
     )
 
-def search_embedding(embedding, threshold=0.5):
+def search_embedding(embedding, threshold= THRESHOLD):
     """
     Searches for a face embedding in the Qdrant vector database.
     Args:

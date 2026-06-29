@@ -4,6 +4,7 @@ qdrant_data/
 __pycache__/
 *.py[cod]
 
+.venv/
 
 *anthony*
 *lea*
@@ -16,3 +17,10 @@ images/evaluation_crop/
 images/debug_crops/
 images
 .env
+
+
+# Qdrant local data & locks
+*.lock
+qdrant_data/
+qdrant/
+evaluation/qdrant_data/

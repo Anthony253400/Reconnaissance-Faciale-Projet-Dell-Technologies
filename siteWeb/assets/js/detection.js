@@ -34,11 +34,15 @@ function startDetection() {
     capture.width  = SEND_W;  capture.height = SEND_H;
     overlay.width  = SEND_W;  overlay.height = SEND_H;
 
+    // operational threshold from injected config (single source of truth)
+    const T = window.APP_CONFIG.THRESHOLD;
+
     // tracked boxes: ogni elemento ha posizione "current" (disegnata) e "target" (dal server)
     // { cx, cy, cw, ch (current), tx, ty, tw, th (target), name, score, color, kind, seen }
     let tracked = [];
 
-    const ws = new WebSocket('ws://localhost:8000/ws/detect');
+    // WebSocket URL from injected config (no hardcoded host/port)
+    const ws = new WebSocket(`${window.APP_CONFIG.WS_BASE}/ws/detect`);
     ws.onopen = () => { console.log("WebSocket connected"); sendFrame(); };
     ws.onclose = () => console.log("WebSocket disconnected");
     ws.onerror = (e) => console.error("WebSocket error:", e);
@@ -56,7 +60,8 @@ function startDetection() {
             incoming.push({
                 tx: dX1, ty: y1, tw: x2 - x1, th: y2 - y1,
                 name, score,
-                color: score >= 0.70 ? "#10b981" : score >= 0.50 ? "#facc15" : "#9ca3af",
+                // green = match (>= threshold), grey = below threshold
+                color: score >= T ? "#10b981" : "#9ca3af",
                 label: (name && name !== "inconnu") ? `${name}  ${score.toFixed(2)}` : "inconnu",
                 kind: "face"
             });
