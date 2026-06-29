@@ -1,11 +1,11 @@
 FROM python:3.11-slim-bookworm
 
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ARG NO_PROXY
-ENV http_proxy=$HTTP_PROXY
-ENV https_proxy=$HTTPS_PROXY
-ENV no_proxy=$NO_PROXY
+ENV http_proxy=http://proxy.mtp.supportlabs.dell:80
+ENV https_proxy=http://proxy.mtp.supportlabs.dell:80
+ENV HTTP_PROXY=http://proxy.mtp.supportlabs.dell:80
+ENV HTTPS_PROXY=http://proxy.mtp.supportlabs.dell:80
+ENV no_proxy=localhost,127.0.0.1,qdrant
+ENV NO_PROXY=localhost,127.0.0.1,qdrant
 
 RUN apt-get update && apt-get install -y \
     git \
