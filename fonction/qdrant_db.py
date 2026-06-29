@@ -10,8 +10,8 @@ import os
 #client = QdrantClient(host="172.19.89.254", port=225)
 
 #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-
-
+client = QdrantClient(path="..//qdrant_data")
+"""
 client = QdrantClient(host = os.getenv("qdrant_host" , 'localhost'),
                       port = int(os.getenv("Qdrant_port", 6333)),
                       prefer_grpc=True
@@ -36,7 +36,9 @@ def create_collection():
             )
         )
 
-def save_embedding(name, embedding , client , COLLECTION):
+#def save_embedding(name, embedding , client , COLLECTION):
+def save_embedding(name, embedding):
+
     """
     Saves a face embedding in the Qdrant vector database with the person's name as payload.
     Args:
@@ -98,3 +100,80 @@ def delete_person(name):
     )
     print(f"Deleted all entries for: {name}")
 
+def list_people():
+    """
+    Returns the list of registered people with their sample count.
+    Scrolls through all points in the collection and aggregates by name payload.
+    Returns:
+        list[dict]: e.g. [{"name": "john doe", "samples": 5}, ...]
+    """
+    counts = {}
+    next_page = None
+    while True:
+        points, next_page = client.scroll(
+            collection_name=COLLECTION,
+            with_payload=True,
+            with_vectors=False,
+            limit=256,
+            offset=next_page,
+        )
+        for p in points:
+            n = p.payload.get("name", "")
+            counts[n] = counts.get(n, 0) + 1
+        if next_page is None:
+            break
+    return [{"name": n, "samples": c} for n, c in sorted(counts.items())]
+
+def rename_person(old_name, new_name):
+    """
+    Renames a person by updating the 'name' payload on all of their points.
+    Args:
+        old_name (str): The current name of the person.
+        new_name (str): The new name to assign.
+ 
+    Uses set_payload with a filter so every point matching old_name gets its
+    'name' field overwritten with new_name. Vectors are left untouched.
+    """
+    client.set_payload(
+        collection_name=COLLECTION,
+        payload={"name": new_name},
+        points=FilterSelector(
+            filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="name",
+                        match=MatchValue(value=old_name)
+                    )
+                ]
+            )
+        ),
+    )
+    print(f"Renamed '{old_name}' -> '{new_name}'")
+
+
+def get_all_embeddings():
+    """
+    Returns every stored point with its name and 512-D vector.
+    Used to project the embeddings (t-SNE / PCA) for visualization.
+    Returns:
+        tuple: (names, vectors) where names is a list[str] and vectors is a
+        list[list[float]], aligned by index.
+    """
+    names, vectors = [], []
+    next_page = None
+    while True:
+        points, next_page = client.scroll(
+            collection_name=COLLECTION,
+            with_payload=True,
+            with_vectors=True,
+            limit=256,
+            offset=next_page,
+        )
+        for p in points:
+            if p.vector is None:
+                continue
+            names.append(p.payload.get("name", ""))
+            vectors.append(p.vector)
+        if next_page is None:
+            break
+    return names, vectors

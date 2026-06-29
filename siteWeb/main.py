@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append('../')
 
-from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
@@ -18,13 +18,15 @@ from qdrant_client.models import FilterSelector, PointStruct, VectorParams, Dist
 
 from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
-from fonction.faceAlignment import align_crop
+from fonction.faceAlignement2 import align_crop
 from fonction.faceEmbeddings import get_embedding
-from fonction.qdrant_db import save_embedding, create_collection, search_embedding
+from fonction.qdrant_db import save_embedding, create_collection, search_embedding, delete_person, list_people, rename_person, get_all_embeddings
 from fonction.bodyDetection import BodyDetect_from_frame
 from fonction.tracker import BodyTracker
 from fonction.bodyAlignment import body_crop
 from fonction.identity_smoother import SmootherBank
+from concurrent.futures import ThreadPoolExecutor
+
 
 COLLECTION = 'face'
 app = FastAPI()
@@ -40,6 +42,7 @@ qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, prefer_grpc=Tru
 model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
 model_yolo      = load_model("yolo", True)
+executor = ThreadPoolExecutor(max_workers=2)
 
 create_collection()   # ensure the 'face' collection exists
 
@@ -61,9 +64,9 @@ async def ws_detect(websocket: WebSocket):
     print("[ws/detect] client connected")
 
     # per-connection state, so identities reset when the page is reopened
-    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, max_lost_frames=90)
+    tracker = BodyTracker(iou_threshold=0.1, max_distance=80, frame_h=480)
     smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
-
+    
     try:
         while True:
             # 1. receive one JPEG frame (bytes) from the browser
@@ -75,25 +78,36 @@ async def ws_detect(websocket: WebSocket):
             if frame_bgr is None:
                 continue
             frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            print("FRAME SHAPE:", frame.shape)
 
-            # 3. detection
+            # 3. detection — body (lento) in un thread, face nel frattempo
+            t0 = time.perf_counter()
+            fut_body = executor.submit(BodyDetect_from_frame, frame, model_yolo)
             boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
-            boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
-
+            t1 = time.perf_counter()
+            boxes_body, _ = fut_body.result()
+            t2 = time.perf_counter()
+            
             # 4. recognize each face
             names, scores, clean_names = [], [], []
             if result and result.detections:
                 crops = align_crop(frame, result, "mediapipe")
                 for i, face_cropped in enumerate(crops):
+                    ta = time.perf_counter()
                     embedding = get_embedding(face_cropped, model_arcface)
+                    tb = time.perf_counter()
                     raw_name, raw_score = search_embedding(embedding)
+                    tc = time.perf_counter()
+                    print(f"  arcface={1000*(tb-ta):.0f}ms qdrant={1000*(tc-tb):.0f}ms")
                     name, score = smoothers.update(i, raw_name, raw_score)
-
                     clean = name if (name and name != "unknown") else ""
                     clean_names.append(clean)
                     names.append(clean if clean else "inconnu")
                     scores.append(round(float(score), 2) if score is not None else 0.0)
                 smoothers.prune(len(boxes_face))
+            t3 = time.perf_counter()
+
+            print(f"face={1000*(t1-t0):.0f}ms body={1000*(t2-t1):.0f}ms recog={1000*(t3-t2):.0f}ms")
 
             # align_crop may drop profile faces: pad to keep lists aligned with boxes_face
             while len(names) < len(boxes_face):
@@ -135,6 +149,9 @@ async def add_person(
 
     saved = 0
     name = f"{firstName} {lastName}".strip().lower()
+    #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
+    #client = QdrantClient(path="..//qdrant_data")
+
 
     for i, photo in enumerate(photos):
         contents = await photo.read()
@@ -158,7 +175,9 @@ async def add_person(
             embedding = get_embedding(crops[0], model_arcface)
 
             # Utilisation du client globalisé et configuré pour Docker
-            save_embedding(name, embedding, qdrant_client, COLLECTION)
+            #save_embedding(name, embedding, qdrant_client, COLLECTION)
+            save_embedding( name, embedding)
+
             saved += 1
 
         except Exception as e:
@@ -172,5 +191,68 @@ async def add_person(
           f"{(time.perf_counter() - t_start) * 1000:.1f} ms")
     return {"status": "ok", "frames_used": saved, "total_frames": len(photos)}
 
+@app.get("/people")
+async def get_people():
+    return {"people": list_people()}
+
+
+@app.put("/people/{name}")
+async def update_person(name: str, new_name: str = Body(..., embed=True)):
+    new_name = new_name.strip().lower()
+    if not new_name:
+        return Response(status_code=422, content="New name is empty.")
+    rename_person(name, new_name)
+    return {"status": "renamed", "old_name": name, "new_name": new_name}
+
+@app.delete("/people/{name}")
+async def remove_person(name: str):
+    delete_person(name)
+    return {"status": "deleted", "name": name}
+
+@app.on_event("shutdown")
+def _close_qdrant():
+    from fonction.qdrant_db import client
+    client.close()
+
+@app.get("/embeddings_3d")
+async def embeddings_3d():
+    """
+    Projects all stored 512-D face embeddings down to 3 dimensions for
+    visualization. Uses t-SNE when there are enough samples, and falls back
+    to PCA (more stable) when there are very few points.
+    Returns: {"points": [{"name": str, "x": float, "y": float, "z": float}, ...]}
+    """
+    names, vectors = get_all_embeddings()
+    n = len(vectors)
+    if n == 0:
+        return {"points": []}
+
+    X = np.asarray(vectors, dtype=np.float32)
+
+    if n < 4:
+        # too few points for t-SNE: use PCA, padding to 3 dims if needed
+        from sklearn.decomposition import PCA
+        comps = min(3, n, X.shape[1])
+        coords = PCA(n_components=comps).fit_transform(X)
+        if coords.shape[1] < 3:
+            pad = np.zeros((n, 3 - coords.shape[1]), dtype=np.float32)
+            coords = np.hstack([coords, pad])
+    else:
+        from sklearn.manifold import TSNE
+        # perplexity must stay below the number of samples
+        perplexity = min(30, max(2, n - 1))
+        coords = TSNE(
+            n_components=3,
+            perplexity=perplexity,
+            init="pca",
+            random_state=42,
+        ).fit_transform(X)
+
+    points = [
+        {"name": names[i], "x": float(coords[i, 0]),
+         "y": float(coords[i, 1]), "z": float(coords[i, 2])}
+        for i in range(n)
+    ]
+    return {"points": points}
 
 app.mount("/static", StaticFiles(directory=".", html=True), name="static")

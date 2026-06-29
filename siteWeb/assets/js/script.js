@@ -229,11 +229,5 @@ async function addPerson() {
  * - upload : returns a single-element array with the selected file
  */
 function getBlobs() {
-    const method = document.getElementById('panel-upload').style.display === 'block' ? 'upload' : 'cam';
-    if (method === 'cam') {
-        return capturedPhotos;
-    } else {
-        const file = document.getElementById('photo').files[0];
-        return file ? [file] : [];
-    }
+    return capturedPhotos;
 }
