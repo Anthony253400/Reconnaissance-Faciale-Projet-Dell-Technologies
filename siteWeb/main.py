@@ -24,6 +24,8 @@ from fonction.bodyDetection import BodyDetect_from_frame
 from fonction.tracker import BodyTracker
 from fonction.bodyAlignment import body_crop
 from fonction.identity_smoother import SmootherBank
+from concurrent.futures import ThreadPoolExecutor
+
 
 COLLECTION = 'face'
 app = FastAPI()
@@ -32,6 +34,7 @@ app = FastAPI()
 model_mediapipe = load_model("blazeface_short", False)
 model_arcface   = load_model("arcface", True)
 model_yolo      = load_model("yolo", True)
+executor = ThreadPoolExecutor(max_workers=2)
 
 create_collection()   # ensure the 'face' collection exists
 
@@ -68,22 +71,26 @@ async def ws_detect(websocket: WebSocket):
             frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             print("FRAME SHAPE:", frame.shape)
 
-            # 3. detection
+            # 3. detection — body (lento) in un thread, face nel frattempo
             t0 = time.perf_counter()
+            fut_body = executor.submit(BodyDetect_from_frame, frame, model_yolo)
             boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
             t1 = time.perf_counter()
-            boxes_body, _ = BodyDetect_from_frame(frame, model_yolo)
+            boxes_body, _ = fut_body.result()
             t2 = time.perf_counter()
-
+            
             # 4. recognize each face
             names, scores, clean_names = [], [], []
             if result and result.detections:
                 crops = align_crop(frame, result, "mediapipe")
                 for i, face_cropped in enumerate(crops):
+                    ta = time.perf_counter()
                     embedding = get_embedding(face_cropped, model_arcface)
+                    tb = time.perf_counter()
                     raw_name, raw_score = search_embedding(embedding)
+                    tc = time.perf_counter()
+                    print(f"  arcface={1000*(tb-ta):.0f}ms qdrant={1000*(tc-tb):.0f}ms")
                     name, score = smoothers.update(i, raw_name, raw_score)
-
                     clean = name if (name and name != "unknown") else ""
                     clean_names.append(clean)
                     names.append(clean if clean else "inconnu")
