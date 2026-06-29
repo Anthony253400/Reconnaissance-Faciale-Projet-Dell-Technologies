@@ -1,4 +1,4 @@
--worker: &worker-base
+x-worker: &worker-base
   build: .
   image: face_recognition:latest
   restart: always
