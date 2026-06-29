@@ -1,4 +1,3 @@
-import os  # <-- AJOUTÉ pour lire l'environnement Docker
 from unicodedata import name
 
 import cv2
@@ -7,6 +6,12 @@ import time
 import numpy as np
 
 sys.path.append('../')
+
+import os
+from dotenv import load_dotenv
+
+# Load .env (same file the frontend and qdrant_db use)
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +25,7 @@ from fonction.loadModel import load_model
 from fonction.faceDetection import FacesDetects_from_frame
 from fonction.faceAlignement2 import align_crop
 from fonction.faceEmbeddings import get_embedding
-from fonction.qdrant_db import save_embedding, create_collection, search_embedding, delete_person, list_people, rename_person, get_all_embeddings
+from fonction.qdrant_db import save_embedding, create_collection, search_embedding, delete_person, list_people, rename_person, get_all_embeddings, client
 from fonction.bodyDetection import BodyDetect_from_frame
 from fonction.tracker import BodyTracker
 from fonction.bodyAlignment import body_crop
@@ -28,24 +33,11 @@ from fonction.identity_smoother import SmootherBank
 from concurrent.futures import ThreadPoolExecutor
 
 
-import os
-from dotenv import load_dotenv
-
-# Load .env (same file the frontend and qdrant_db use)
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
-
 # Config from environment
 COLLECTION = os.getenv("QDRANT_COLLECTION", "face")
 THRESHOLD  = float(os.getenv("THRESHOLD", "0.61"))
 
 app = FastAPI()
-
-# Récupération dynamique de la configuration réseau Qdrant (Docker ou Local)
-QDRANT_HOST = os.getenv("qdrant_host", "localhost")
-QDRANT_PORT = int(os.getenv("Qdrant_port", 6333))
-
-# Client Qdrant global (réutilisé par toutes les routes)
-qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, prefer_grpc=True)
 
 # Models (loaded once at startup)
 model_mediapipe = load_model("blazeface_short", False)
@@ -54,7 +46,6 @@ model_yolo      = load_model("yolo", True)
 executor = ThreadPoolExecutor(max_workers=2)
 
 create_collection()   # ensure the 'face' collection exists
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -74,8 +65,8 @@ async def ws_detect(websocket: WebSocket):
 
     # per-connection state, so identities reset when the page is reopened
     tracker = BodyTracker(iou_threshold=0.1, max_distance=80, frame_h=480)
-    smoothers = SmootherBank(window=8, min_votes=3, min_score=0.55, score_hold=5)
-    
+    smoothers = SmootherBank(match_dist=120, window=8, min_votes=3, min_score=0.55, score_hold=5)
+
     try:
         while True:
             # 1. receive one JPEG frame (bytes) from the browser
@@ -89,38 +80,44 @@ async def ws_detect(websocket: WebSocket):
             frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             print("FRAME SHAPE:", frame.shape)
 
-            # 3. detection — body (lento) in un thread, face nel frattempo
+            # 3. detection — body detection (slow) runs in a thread,
+            #    face detection runs in the meantime
             t0 = time.perf_counter()
             fut_body = executor.submit(BodyDetect_from_frame, frame, model_yolo)
             boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
             t1 = time.perf_counter()
             boxes_body, _ = fut_body.result()
             t2 = time.perf_counter()
-            
+
             # 4. recognize each face
             names, scores, clean_names = [], [], []
             if result and result.detections:
                 crops = align_crop(frame, result, "mediapipe")
-                for i, face_cropped in enumerate(crops):
+                # 4a. collect the raw embeddings/matches for ALL faces
+                raw_names, raw_scores = [], []
+                for face_cropped in crops:
                     ta = time.perf_counter()
                     embedding = get_embedding(face_cropped, model_arcface)
                     tb = time.perf_counter()
-                    raw_name, raw_score = search_embedding(embedding)
+                    rn, rs = search_embedding(embedding)
                     tc = time.perf_counter()
                     print(f"  arcface={1000*(tb-ta):.0f}ms qdrant={1000*(tc-tb):.0f}ms")
-                    name, score = smoothers.update(i, raw_name, raw_score)
+                    raw_names.append(rn)
+                    raw_scores.append(rs)
+                # 4b. stabilize all faces together, keyed by spatial position
+                sm_names, sm_scores = smoothers.update_frame(boxes_face[:len(crops)], raw_names, raw_scores)
+                for name, score in zip(sm_names, sm_scores):
                     clean = name if (name and name != "unknown") else ""
                     clean_names.append(clean)
-                    names.append(clean if clean else "inconnu")
+                    names.append(clean if clean else "unknown")
                     scores.append(round(float(score), 2) if score is not None else 0.0)
-                smoothers.prune(len(boxes_face))
             t3 = time.perf_counter()
 
             print(f"face={1000*(t1-t0):.0f}ms body={1000*(t2-t1):.0f}ms recog={1000*(t3-t2):.0f}ms")
 
-            # align_crop may drop profile faces: pad to keep lists aligned with boxes_face
+            # align_crop may drop profile faces: pad to keep the lists aligned with boxes_face
             while len(names) < len(boxes_face):
-                names.append("inconnu")
+                names.append("unknown")
                 scores.append(0.0)
                 clean_names.append("")
 
@@ -158,9 +155,6 @@ async def add_person(
 
     saved = 0
     name = f"{firstName} {lastName}".strip().lower()
-    #client = QdrantClient(host="localhost", port=6333 , prefer_grpc=True)
-    #client = QdrantClient(path="..//qdrant_data")
-
 
     for i, photo in enumerate(photos):
         contents = await photo.read()
@@ -183,9 +177,7 @@ async def add_person(
 
             embedding = get_embedding(crops[0], model_arcface)
 
-            # Utilisation du client globalisé et configuré pour Docker
-            #save_embedding(name, embedding, qdrant_client, COLLECTION)
-            save_embedding( name, embedding)
+            save_embedding(name, embedding)
 
             saved += 1
 
@@ -220,8 +212,11 @@ async def remove_person(name: str):
 
 @app.on_event("shutdown")
 def _close_qdrant():
-    from fonction.qdrant_db import client
-    client.close()
+    # client is already imported at module top — no late import during shutdown
+    try:
+        client.close()
+    except Exception:
+        pass
 
 @app.get("/embeddings_3d")
 async def embeddings_3d():

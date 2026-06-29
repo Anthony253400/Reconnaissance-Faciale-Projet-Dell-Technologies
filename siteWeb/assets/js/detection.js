@@ -62,7 +62,7 @@ function startDetection() {
                 name, score,
                 // green = match (>= threshold), grey = below threshold
                 color: score >= T ? "#10b981" : "#9ca3af",
-                label: (name && name !== "inconnu") ? `${name}  ${score.toFixed(2)}` : "inconnu",
+                label: (name && name !== "unknown") ? `${name}  ${score.toFixed(2)}` : "unknown",
                 kind: "face"
             });
         }
