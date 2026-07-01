@@ -11,7 +11,6 @@
 
 
     <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
 
 </head>
 <body>

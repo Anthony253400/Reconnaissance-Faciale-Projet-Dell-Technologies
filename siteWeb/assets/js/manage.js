@@ -1,5 +1,5 @@
 import "https://cdn.plot.ly/plotly-2.35.2.min.js";
-const API = "http://localhost:8000"; 
+const API = window.APP_CONFIG.API_BASE; 
 
     async function loadPeople() {
         const ul = document.getElementById("people-list");

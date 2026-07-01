@@ -11,7 +11,6 @@
 
 
   <script src="assets/js/navbar.js"></script>
-  <script src="assets/js/footer.js"></script>
 
 <style>
   /* couleurs propres aux graphiques (gardees pour Chart.js) */

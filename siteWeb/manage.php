@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . "/config.php"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,9 +11,9 @@
     <link rel="stylesheet" href="assets/css/footer.css">
 
     <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-    <script src="assets/js/manage.js"></script>
+<?php render_js_config(); ?>
+    <script type="module" src="assets/js/manage.js"></script>
 </head>
 <body>
     <?php include("components/navbar.php"); ?>
