@@ -86,8 +86,6 @@ async def ws_detect(websocket: WebSocket):
             fut_body = executor.submit(BodyDetect_from_frame, frame, model_yolo)
             boxes_face, result, _ = FacesDetects_from_frame(frame, "mediapipe", model_mediapipe)
             t1 = time.perf_counter()
-            boxes_body, _ = fut_body.result()
-            t2 = time.perf_counter()
 
             # 4. recognize each face
             names, scores, clean_names = [], [], []
@@ -113,15 +111,18 @@ async def ws_detect(websocket: WebSocket):
                     scores.append(round(float(score), 2) if score is not None else 0.0)
             t3 = time.perf_counter()
 
-            print(f"face={1000*(t1-t0):.0f}ms body={1000*(t2-t1):.0f}ms recog={1000*(t3-t2):.0f}ms")
-
             # align_crop may drop profile faces: pad to keep the lists aligned with boxes_face
             while len(names) < len(boxes_face):
                 names.append("unknown")
                 scores.append(0.0)
                 clean_names.append("")
 
-            # 5. body tracking
+            # 5. body tracking — recuperiamo qui il risultato di YOLO, che ha
+            # girato in parallelo per tutto il tempo di ArcFace
+            boxes_body, _ = fut_body.result()
+            t2 = time.perf_counter()
+            print(f"face={1000*(t1-t0):.0f}ms recog={1000*(t3-t1):.0f}ms body_wait={1000*(t2-t3):.0f}ms totale={1000*(t2-t0):.0f}ms")
+
             crops_body = body_crop(frame, boxes_body) if boxes_body else []
             body_names = tracker.update(boxes_face, boxes_body, clean_names, crops_body)
 
